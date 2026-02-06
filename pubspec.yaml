@@ -1,0 +1,113 @@
+name: markaz_al_furqan
+description: A comprehensive Quran memorization management app for Markaz Al-Furqan
+
+publish_to: "none"
+
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # UI and Material Design
+  cupertino_icons: ^1.0.2
+  material_color_utilities: ^0.11.1
+
+  # State Management
+  provider: ^6.0.5
+  riverpod: ^2.4.0
+  flutter_riverpod: ^2.4.0
+
+  # HTTP and API
+  http: ^1.1.0
+  dio: ^5.3.2
+
+  # Local Storage
+  shared_preferences: ^2.2.2
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
+
+  # Authentication
+  flutter_secure_storage: ^9.0.0
+
+  # Navigation
+  go_router: ^15.2.3
+
+  # Localization
+  syncfusion_flutter_charts: ^30.1.40
+
+  # UI Components
+  flutter_svg: ^2.0.7
+  cached_network_image: ^3.3.0
+  shimmer: ^3.0.0
+
+  # Forms and Validation
+  flutter_form_builder: ^10.0.1
+  form_builder_validators: ^11.2.0
+
+  # Date and Time
+  intl: ^0.20.2
+
+  # Charts and Progress
+  fl_chart: ^1.0.0
+  percent_indicator: ^4.2.3
+
+  # Notifications
+  flutter_local_notifications: ^19.3.0
+
+  # Image Handling
+  image_picker: ^1.0.4
+
+  # Arabic and RTL Support
+  flutter_localizations:
+    sdk: flutter
+
+  # Animations
+  lottie: ^3.3.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_launcher_icons: ^0.14.1
+  flutter_lints: ^6.0.0
+  hive_generator: ^2.0.1
+  build_runner: ^2.4.7
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/
+    - assets/fonts/
+
+  fonts:
+    - family: NotoSansArabic
+      fonts:
+        - asset: assets/fonts/NotoSansArabic-Regular.ttf
+        - asset: assets/fonts/NotoSansArabic-Bold.ttf
+          weight: 700
+    - family: Cairo
+      fonts:
+        - asset: assets/fonts/Cairo-Regular.ttf
+        - asset: assets/fonts/Cairo-Bold.ttf
+          weight: 700
+    - family: UthmaniHafs
+      fonts:
+        - asset: assets/fonts/UthmanicHafs-Regular.ttf
+
+flutter_intl:
+  enabled: true
+  arb_dir: lib/l10n
+  output_dir: lib/generated
+  main_locale: ar
+
+  flutter_launcher_icons:
+    android: "launcher_icon"
+    ios: true
+    image_path: "assets/icon/logo.png"
+    # Optional: for Android 8.0+ adaptive icons
+    adaptive_icon_background: "#FFFFFF"
+    adaptive_icon_foreground: "assets/icon/logo.png"
