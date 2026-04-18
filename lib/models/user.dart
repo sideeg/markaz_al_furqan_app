@@ -6,36 +6,39 @@ part 'user.g.dart';
 class User extends HiveObject {
   @HiveField(0)
   final int id;
-  
+
   @HiveField(1)
   final String name;
-  
+
   @HiveField(2)
   final String email;
-  
+
   @HiveField(3)
   final String role;
-  
+
   @HiveField(4)
   final String? phone;
-  
+
   @HiveField(5)
   final String? nationalId;
-  
+
   @HiveField(6)
   final String? qiraat;
-  
+
   @HiveField(7)
   final String? profileImage;
-  
+
   @HiveField(8)
   final bool isActive;
-  
+
   @HiveField(9)
   final DateTime createdAt;
-  
+
   @HiveField(10)
   final DateTime updatedAt;
+
+  @HiveField(11)
+  final String? gender;
 
   User({
     required this.id,
@@ -47,6 +50,7 @@ class User extends HiveObject {
     this.qiraat,
     this.profileImage,
     this.isActive = true,
+    this.gender,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -62,6 +66,7 @@ class User extends HiveObject {
       qiraat: json['qiraat'] as String?,
       profileImage: json['profile_image'] as String?,
       isActive: json['is_active'] as bool? ?? true,
+      gender: json['gender'] as String?,
       createdAt: DateTime.parse(json['created_at'] as String),
       updatedAt: DateTime.parse(json['updated_at'] as String),
     );
@@ -78,6 +83,7 @@ class User extends HiveObject {
       'qiraat': qiraat,
       'profile_image': profileImage,
       'is_active': isActive,
+      'gender': gender,
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
     };
@@ -124,13 +130,13 @@ class User extends HiveObject {
 
   @override
   int get hashCode => id.hashCode;
-  
+
   // Helper getters
   bool get isStudent => role == 'student';
   bool get isSheikh => role == 'sheikh';
   bool get isAdmin => role == 'admin';
   bool get isSupervisor => role == 'supervisor';
-  
+
   String get displayName => name;
   String get initials {
     final names = name.split(' ');
@@ -140,4 +146,3 @@ class User extends HiveObject {
     return name.isNotEmpty ? name[0] : '';
   }
 }
-

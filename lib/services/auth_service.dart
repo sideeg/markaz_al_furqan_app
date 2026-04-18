@@ -141,6 +141,7 @@ class AuthService extends StateNotifier<AuthState> {
     String? phone,
     String? nationalId,
     String? qiraat,
+    String? gender,
   }) async {
     state = state.copyWith(isLoading: true, error: null);
 
@@ -153,6 +154,7 @@ class AuthService extends StateNotifier<AuthState> {
         'phone': phone,
         'national_id': nationalId,
         'qiraat': qiraat,
+        'gender': gender,
       });
 
       if (response.data['success'] == true) {

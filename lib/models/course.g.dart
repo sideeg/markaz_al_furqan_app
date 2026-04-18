@@ -36,13 +36,14 @@ class CourseAdapter extends TypeAdapter<Course> {
       createdAt: fields[16] as DateTime,
       updatedAt: fields[17] as DateTime,
       enrollmentStatus: fields[18] as String?,
+      mosque: fields[19] as Mosque?,
     );
   }
 
   @override
   void write(BinaryWriter writer, Course obj) {
     writer
-      ..writeByte(19)
+      ..writeByte(20)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -80,7 +81,9 @@ class CourseAdapter extends TypeAdapter<Course> {
       ..writeByte(17)
       ..write(obj.updatedAt)
       ..writeByte(18)
-      ..write(obj.enrollmentStatus);
+      ..write(obj.enrollmentStatus)
+      ..writeByte(19)
+      ..write(obj.mosque);
   }
 
   @override

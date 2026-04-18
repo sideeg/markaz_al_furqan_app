@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class ApiService {
   late final Dio _dio;
-  static const String baseUrl = 'http://147.93.131.56:8000/api/v1';
+  static const String baseUrl = 'http://147.93.131.56:8000//api/v1';
 
   ApiService() {
     _dio = Dio(BaseOptions(
@@ -25,18 +25,12 @@ class ApiService {
       InterceptorsWrapper(
         onRequest: (options, handler) {
           // Add any request modifications here
-          print('Request: ${options.method} ${options.path}');
           handler.next(options);
         },
         onResponse: (response, handler) {
-          print(
-              'Response: ${response.statusCode} ${response.requestOptions.path}');
           handler.next(response);
         },
         onError: (error, handler) {
-          print(
-              'Error: ${error.response?.statusCode} ${error.requestOptions.path}');
-          print('Error message: ${error.message}');
           handler.next(error);
         },
       ),

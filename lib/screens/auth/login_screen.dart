@@ -36,17 +36,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     );
 
     if (success && mounted) {
-      final user = ref.read(authServiceProvider).user;
-      switch (user?.role) {
-        case 'student':
-          context.go('/student/home');
-          break;
-        case 'sheikh':
-          context.go('/sheikh/dashboard');
-          break;
-        default:
-          context.go('/student/home');
-      }
+      context.go('/student/home');
     }
   }
 
@@ -65,56 +55,38 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const SizedBox(height: 60),
-                
+
                 // App Logo and Title
                 Column(
                   children: [
-                    Container(
-                      width: 100,
-                      height: 100,
-                      decoration: BoxDecoration(
-                        color: AppColors.primary,
-                        borderRadius: BorderRadius.circular(20),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.primary.withOpacity(0.3),
-                            blurRadius: 15,
-                            offset: const Offset(0, 8),
-                          ),
-                        ],
-                      ),
-                      child: const Icon(
-                        Icons.menu_book_rounded,
-                        size: 50,
-                        color: AppColors.onPrimary,
-                      ),
+                    Image.asset(
+                      'assets/images/logo.png',
+                      width: 120,
+                      height: 120,
+                      fit: BoxFit.contain,
                     ),
-                    
                     const SizedBox(height: 24),
-                    
                     Text(
                       'مرحباً بك',
                       style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                        color: AppColors.primary,
-                        fontWeight: FontWeight.bold,
-                      ),
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.bold,
+                          ),
                       textAlign: TextAlign.center,
                     ),
-                    
                     const SizedBox(height: 8),
-                    
                     Text(
                       'سجل دخولك للمتابعة',
                       style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: AppColors.onSurfaceVariant,
-                      ),
+                            color: AppColors.onSurfaceVariant,
+                          ),
                       textAlign: TextAlign.center,
                     ),
                   ],
                 ),
-                
+
                 const SizedBox(height: 48),
-                
+
                 // Email Field
                 CustomTextField(
                   controller: _emailController,
@@ -126,15 +98,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     if (value == null || value.isEmpty) {
                       return 'يرجى إدخال البريد الإلكتروني';
                     }
-                    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+                    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
+                        .hasMatch(value)) {
                       return 'يرجى إدخال بريد إلكتروني صحيح';
                     }
                     return null;
                   },
                 ),
-                
+
                 const SizedBox(height: 16),
-                
+
                 // Password Field
                 CustomTextField(
                   controller: _passwordController,
@@ -144,7 +117,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   prefixIcon: Icons.lock_outlined,
                   suffixIcon: IconButton(
                     icon: Icon(
-                      _obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                      _obscurePassword
+                          ? Icons.visibility_outlined
+                          : Icons.visibility_off_outlined,
                     ),
                     onPressed: () {
                       setState(() {
@@ -162,9 +137,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     return null;
                   },
                 ),
-                
+
                 const SizedBox(height: 24),
-                
+
                 // Error Message
                 if (authState.error != null)
                   Container(
@@ -173,7 +148,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     decoration: BoxDecoration(
                       color: AppColors.error.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: AppColors.error.withOpacity(0.3)),
+                      border:
+                          Border.all(color: AppColors.error.withOpacity(0.3)),
                     ),
                     child: Row(
                       children: [
@@ -186,24 +162,25 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         Expanded(
                           child: Text(
                             authState.error!,
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: AppColors.error,
-                            ),
+                            style:
+                                Theme.of(context).textTheme.bodySmall?.copyWith(
+                                      color: AppColors.error,
+                                    ),
                           ),
                         ),
                       ],
                     ),
                   ),
-                
+
                 // Login Button
                 CustomButton(
                   text: 'تسجيل الدخول',
                   onPressed: authState.isLoading ? null : _login,
                   isLoading: authState.isLoading,
                 ),
-                
+
                 const SizedBox(height: 16),
-                
+
                 // Forgot Password
                 TextButton(
                   onPressed: () {
@@ -216,9 +193,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   },
                   child: const Text('نسيت كلمة المرور؟'),
                 ),
-                
+
                 const SizedBox(height: 32),
-                
+
                 // Divider
                 Row(
                   children: [
@@ -228,16 +205,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       child: Text(
                         'أو',
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppColors.onSurfaceVariant,
-                        ),
+                              color: AppColors.onSurfaceVariant,
+                            ),
                       ),
                     ),
                     const Expanded(child: Divider()),
                   ],
                 ),
-                
+
                 const SizedBox(height: 32),
-                
+
                 // Register Link
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -252,7 +229,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                   ],
                 ),
-                
+
                 const SizedBox(height: 24),
               ],
             ),
@@ -262,4 +239,3 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     );
   }
 }
-

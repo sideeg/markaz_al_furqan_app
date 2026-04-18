@@ -21,10 +21,6 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   @override
   void initState() {
     super.initState();
-    // Test all logging methods
-    print('TEST: print works');
-    debugPrint('TEST: debugPrint works');
-    developer.log('TEST: developer.log works', name: 'INIT');
 
     _animationController = AnimationController(
       duration: const Duration(seconds: 2),
@@ -65,17 +61,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     final authState = ref.read(authServiceProvider);
 
     if (authState.isAuthenticated) {
-      final userRole = authState.user?.role;
-      switch (userRole) {
-        case 'student':
-          context.go('/student/home');
-          break;
-        case 'sheikh':
-          context.go('/sheikh/dashboard');
-          break;
-        default:
-          context.go('/student/home');
-      }
+      context.go('/student/home');
     } else {
       context.go('/login');
     }
@@ -103,25 +89,11 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                       child: Column(
                         children: [
                           // App Icon/Logo
-                          Container(
+                          Image.asset(
+                            'assets/images/logo.png',
                             width: 120,
                             height: 120,
-                            decoration: BoxDecoration(
-                              color: AppColors.primary,
-                              borderRadius: BorderRadius.circular(24),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: AppColors.primary.withOpacity(0.3),
-                                  blurRadius: 20,
-                                  offset: const Offset(0, 10),
-                                ),
-                              ],
-                            ),
-                            child: const Icon(
-                              Icons.menu_book_rounded,
-                              size: 60,
-                              color: AppColors.onPrimary,
-                            ),
+                            fit: BoxFit.contain,
                           ),
 
                           const SizedBox(height: 24),
@@ -201,7 +173,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                     child: Padding(
                       padding: const EdgeInsets.only(bottom: 32),
                       child: Text(
-                        'الإصدار 1.0.0',
+                        'الإصدار 1.0.1',
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                               color: AppColors.onSurfaceVariant,
                             ),

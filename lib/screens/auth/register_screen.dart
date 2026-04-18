@@ -24,9 +24,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   final _confirmPasswordController = TextEditingController();
   final _phoneController = TextEditingController();
   final _nationalIdController = TextEditingController();
-  final _qiraatController = TextEditingController();
 
   String? _selectedQiraat; // Change this from TextEditingController to String?
+  String? _selectedGender;
 
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
@@ -39,25 +39,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     _confirmPasswordController.dispose();
     _phoneController.dispose();
     _nationalIdController.dispose();
-    _qiraatController.dispose();
     super.dispose();
   }
 
   Future<void> _register() async {
     if (!_formKey.currentState!.validate()) return;
-    // 🔍 DEBUG PRINTS - Check what's being sent
-    developer.log('==================== DEBUG START ====================',
-        name: 'REGISTER');
-    developer.log('Name: ${_nameController.text.trim()}', name: 'REGISTER');
-    developer.log('Email: ${_emailController.text.trim()}', name: 'REGISTER');
-    developer.log('Phone: ${_phoneController.text.trim()}', name: 'REGISTER');
-    developer.log('National ID: ${_nationalIdController.text.trim()}',
-        name: 'REGISTER');
-    developer.log('Selected Qiraat: $_selectedQiraat', name: 'REGISTER');
-    developer.log('Qiraat is null: ${_selectedQiraat == null}',
-        name: 'REGISTER');
-    developer.log('==================== DEBUG END ====================',
-        name: 'REGISTER');
 
     final authService = ref.read(authServiceProvider.notifier);
     final success = await authService.register(
@@ -72,6 +58,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           ? _nationalIdController.text.trim()
           : null,
       qiraat: _selectedQiraat,
+      gender: _selectedGender,
     );
 
     if (success && mounted) {
@@ -199,7 +186,21 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 ),
 
                 const SizedBox(height: 16),
-
+// Gender Dropdown
+                CustomDropdownField(
+                  label: 'الجنس',
+                  hint: 'اختر الجنس',
+                  value: _selectedGender,
+                  items: const ['ذكر', 'أنثي'],
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedGender = value;
+                    });
+                  },
+                  validator: (value) =>
+                      value == null ? 'يرجى اختيار الجنس' : null,
+                ),
+                const SizedBox(height: 16),
                 // Qiraat Field
                 CustomDropdownField(
                   label: 'القراءة المفضلة',
@@ -208,14 +209,12 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   items: QiraatTypes.values,
                   prefixIcon: Icons.record_voice_over_outlined,
                   onChanged: (value) {
-                    developer.log('Dropdown changed to: $value',
-                        name: 'QIRAAT_DROPDOWN');
                     setState(() {
                       _selectedQiraat = value;
-                      developer.log('State updated to: $_selectedQiraat',
-                          name: 'QIRAAT_DROPDOWN');
                     });
                   },
+                  validator: (value) =>
+                      value == null ? 'يرجى اختيار القراءة' : null,
                 ),
 
                 const SizedBox(height: 16),

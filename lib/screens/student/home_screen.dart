@@ -16,16 +16,35 @@ class HomeScreen extends ConsumerStatefulWidget {
   ConsumerState<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends ConsumerState<HomeScreen> {
+class _HomeScreenState extends ConsumerState<HomeScreen>
+    with WidgetsBindingObserver {
   final _searchController = TextEditingController();
   String _selectedFilter = 'all';
   String _searchQuery = '';
   DateTime? _lastRefreshTime;
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _searchController.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      if (_lastRefreshTime != null &&
+          DateTime.now().difference(_lastRefreshTime!) >
+              const Duration(minutes: 5)) {
+        _refreshData();
+      }
+    }
   }
 
   @override
@@ -92,7 +111,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         ],
                       ),
                     ),
-// Refresh Button
+
+                    // Refresh Button
                     IconButton(
                       onPressed: coursesAsync.isLoading ? null : _refreshData,
                       icon: coursesAsync.isLoading
@@ -110,10 +130,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       color: AppColors.onSurface,
                       tooltip: 'تحديث',
                     ),
+
                     // Notifications
                     IconButton(
                       onPressed: () {
-                        // TODO: Navigate to notifications
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(content: Text('الإشعارات قريباً')),
                         );
@@ -132,7 +152,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Search Bar
                       SearchBarWidget(
                         controller: _searchController,
                         hint: 'ابحث عن الدورات...',
@@ -142,10 +161,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           });
                         },
                       ),
-
                       const SizedBox(height: 16),
-
-                      // Filter Chips
                       FilterChips(
                         selectedFilter: _selectedFilter,
                         onFilterChanged: (filter) {
@@ -303,32 +319,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   Future<void> _refreshData() async {
     ref.invalidate(coursesProvider);
-    _lastRefreshTime = DateTime.now();
-  }
-
-  // Auto-refresh when app comes to foreground
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) {
-      // Refresh if more than 5 minutes have passed
-      if (_lastRefreshTime != null &&
-          DateTime.now().difference(_lastRefreshTime!) >
-              const Duration(minutes: 5)) {
-        _refreshData();
-      }
-    }
+    setState(() {
+      _lastRefreshTime = DateTime.now();
+    });
   }
 
   List<Course> _filterCourses(List<Course> courses) {
     var filtered = courses.where((course) => course.isActive).toList();
 
-    // Apply type filter
     if (_selectedFilter != 'all') {
       filtered =
           filtered.where((course) => course.type == _selectedFilter).toList();
     }
 
-    // Apply search filter
     if (_searchQuery.isNotEmpty) {
       filtered = filtered.where((course) {
         return course.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
@@ -528,6 +531,52 @@ class CourseDetailsBottomSheet extends ConsumerWidget {
                         course.requirements!,
                         style: Theme.of(context).textTheme.bodyMedium,
                       ),
+                    ]),
+                    const SizedBox(height: 16),
+                  ],
+
+                  // Mosque Details
+                  if (course.mosque != null) ...[
+                    _buildInfoSection(context, 'تفاصيل المسجد', [
+                      Row(
+                        children: [
+                          Icon(Icons.mosque,
+                              size: 20, color: AppColors.primary),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              course.mosque!.name,
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .titleSmall
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.primary,
+                                  ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      if (course.mosque!.description != null)
+                        _buildInfoRow(
+                            context, 'الوصف', course.mosque!.description!),
+                      if (course.mosque!.address != null ||
+                          course.mosque!.city != null)
+                        _buildInfoRow(
+                          context,
+                          'الموقع',
+                          [
+                            if (course.mosque!.address != null)
+                              course.mosque!.address!,
+                            if (course.mosque!.city != null)
+                              course.mosque!.city!,
+                          ].join(' - '),
+                        ),
+                      if (course.mosque!.phone != null)
+                        _buildInfoRow(context, 'الهاتف', course.mosque!.phone!),
+                      if (course.mosque!.email != null)
+                        _buildInfoRow(context, 'البريد', course.mosque!.email!),
                     ]),
                     const SizedBox(height: 16),
                   ],

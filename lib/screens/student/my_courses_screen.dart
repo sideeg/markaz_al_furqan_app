@@ -13,10 +13,34 @@ class MyCoursesScreen extends ConsumerStatefulWidget {
   ConsumerState<MyCoursesScreen> createState() => _MyCoursesScreenState();
 }
 
-class _MyCoursesScreenState extends ConsumerState<MyCoursesScreen> {
+class _MyCoursesScreenState extends ConsumerState<MyCoursesScreen>
+    with WidgetsBindingObserver {
   String _selectedFilter = 'active';
   final List<String> _filters = ['active', 'completed', 'pending'];
   DateTime? _lastRefreshTime;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      if (_lastRefreshTime != null &&
+          DateTime.now().difference(_lastRefreshTime!) >
+              const Duration(minutes: 5)) {
+        _refreshData();
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -27,7 +51,6 @@ class _MyCoursesScreenState extends ConsumerState<MyCoursesScreen> {
         title: const Text('دوراتي'),
         centerTitle: true,
         actions: [
-          // Refresh Button
           IconButton(
             onPressed: myCoursesAsync.isLoading ? null : _refreshData,
             icon: myCoursesAsync.isLoading
@@ -76,11 +99,10 @@ class _MyCoursesScreenState extends ConsumerState<MyCoursesScreen> {
                         );
                       }).toList(),
                     ),
-                    // Last Updated Info
                   ),
                 ),
 
-                // Active courses
+                // Courses list
                 if (filteredCourses.isNotEmpty) ...[
                   SliverToBoxAdapter(
                     child: SectionHeader(
@@ -95,9 +117,7 @@ class _MyCoursesScreenState extends ConsumerState<MyCoursesScreen> {
                         return Padding(
                           padding: const EdgeInsets.symmetric(
                               horizontal: 16, vertical: 8),
-                          child: CourseCard(
-                            course: course,
-                          ),
+                          child: CourseCard(course: course),
                         );
                       },
                       childCount: filteredCourses.length,
@@ -137,11 +157,7 @@ class _MyCoursesScreenState extends ConsumerState<MyCoursesScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                Icons.error_outline,
-                size: 64,
-                color: AppColors.error,
-              ),
+              Icon(Icons.error_outline, size: 64, color: AppColors.error),
               const SizedBox(height: 16),
               Text(
                 'حدث خطأ في تحميل الدورات',
@@ -165,22 +181,11 @@ class _MyCoursesScreenState extends ConsumerState<MyCoursesScreen> {
     );
   }
 
-// Auto-refresh when screen comes to foreground
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) {
-      // Refresh if more than 5 minutes have passed
-      if (_lastRefreshTime != null &&
-          DateTime.now().difference(_lastRefreshTime!) >
-              const Duration(minutes: 5)) {
-        _refreshData();
-      }
-    }
-  }
-
   Future<void> _refreshData() async {
     ref.invalidate(myCoursesProvider);
-    _lastRefreshTime = DateTime.now();
+    setState(() {
+      _lastRefreshTime = DateTime.now();
+    });
   }
 
   List<Course> _filterCourses(List<Course> courses) {

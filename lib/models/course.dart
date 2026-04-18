@@ -1,4 +1,5 @@
 import 'package:hive/hive.dart';
+import 'mosque.dart';
 
 part 'course.g.dart';
 
@@ -61,6 +62,9 @@ class Course extends HiveObject {
   @HiveField(18)
   final String? enrollmentStatus; // For student's enrollment status
 
+  @HiveField(19)
+  final Mosque? mosque; // Add mosque object
+
   Course({
     required this.id,
     required this.name,
@@ -81,6 +85,7 @@ class Course extends HiveObject {
     required this.createdAt,
     required this.updatedAt,
     this.enrollmentStatus,
+    this.mosque,
   });
 
   factory Course.fromJson(Map<String, dynamic> json) {
@@ -90,7 +95,8 @@ class Course extends HiveObject {
       description: json['description'] as String?,
       type: json['type'] as String,
       mosqueId: json['mosque_id'] as int?,
-      mosqueName: json['mosque_name'] as String?,
+      mosqueName: json['mosque_name'] as String? ??
+          (json['mosque'] != null ? json['mosque']['name'] as String? : null),
       imagePath: json['image_path'] as String?,
       startDate: json['start_date'] != null
           ? DateTime.parse(json['start_date'] as String)
@@ -108,6 +114,9 @@ class Course extends HiveObject {
       createdAt: DateTime.parse(json['created_at'] as String),
       updatedAt: DateTime.parse(json['updated_at'] as String),
       enrollmentStatus: json['enrollment_status'] as String?,
+      mosque: json['mosque'] != null
+          ? Mosque.fromJson(json['mosque'] as Map<String, dynamic>)
+          : null,
     );
   }
 
@@ -132,6 +141,7 @@ class Course extends HiveObject {
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
       'enrollment_status': enrollmentStatus,
+      'mosque': mosque?.toJson(),
     };
   }
 
@@ -155,6 +165,7 @@ class Course extends HiveObject {
     DateTime? createdAt,
     DateTime? updatedAt,
     String? enrollmentStatus,
+    Mosque? mosque,
   }) {
     return Course(
       id: id ?? this.id,
@@ -176,6 +187,7 @@ class Course extends HiveObject {
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       enrollmentStatus: enrollmentStatus ?? this.enrollmentStatus,
+      mosque: mosque ?? this.mosque,
     );
   }
 

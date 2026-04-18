@@ -16,9 +16,6 @@ import 'screens/student/home_screen.dart';
 import 'screens/student/my_courses_screen.dart';
 import 'screens/student/progress_screen.dart';
 import 'screens/student/profile_screen.dart';
-import 'screens/sheikh/sheikh_dashboard_screen.dart';
-import 'screens/sheikh/group_students_screen.dart';
-import 'screens/sheikh/add_log_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -92,15 +89,7 @@ class MarkazAlFurqanApp extends ConsumerWidget {
         }
 
         if (isLoggedIn && isLoggingIn) {
-          final userRole = authState.user?.role;
-          switch (userRole) {
-            case 'student':
-              return '/student/home';
-            case 'sheikh':
-              return '/sheikh/dashboard';
-            default:
-              return '/student/home';
-          }
+          return '/student/home';
         }
 
         return null;
@@ -140,25 +129,6 @@ class MarkazAlFurqanApp extends ConsumerWidget {
               builder: (context, state) => const ProfileScreen(),
             ),
           ],
-        ),
-
-        // Sheikh Routes
-        GoRoute(
-          path: '/sheikh/dashboard',
-          builder: (context, state) => const SheikhDashboardScreen(),
-        ),
-        GoRoute(
-          path: '/sheikh/group/:groupId',
-          builder: (context, state) => GroupStudentsScreen(
-            groupId: int.parse(state.pathParameters['groupId']!),
-          ),
-        ),
-        GoRoute(
-          path: '/sheikh/add-log/:studentId',
-          builder: (context, state) => AddLogScreen(
-            studentId: int.parse(state.pathParameters['studentId']!),
-            logType: state.uri.queryParameters['type'] ?? 'hifz',
-          ),
         ),
       ],
     );
