@@ -233,30 +233,28 @@ class _ChangePasswordDialogState extends ConsumerState<ChangePasswordDialog> {
                 const SizedBox(height: 24),
 
                 // Buttons
-                Row(
+                // Buttons (تم التحويل إلى Column لحل الـ Overflow)
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: _isLoading
-                            ? null
-                            : () => Navigator.of(context).pop(),
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          side: BorderSide(color: AppColors.primary),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: const Text('إلغاء'),
-                      ),
+                    CustomButton(
+                      text: 'تغيير كلمة المرور',
+                      onPressed: _isLoading ? null : _changePassword,
+                      isLoading: _isLoading,
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: CustomButton(
-                        text: 'تغيير كلمة المرور',
-                        onPressed: _isLoading ? null : _changePassword,
-                        isLoading: _isLoading,
+                    const SizedBox(height: 12),
+                    OutlinedButton(
+                      onPressed:
+                          _isLoading ? null : () => Navigator.of(context).pop(),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        side: const BorderSide(
+                            color: AppColors.primary), // تم التصحيح هنا
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
+                      child: const Text('إلغاء'),
                     ),
                   ],
                 ),

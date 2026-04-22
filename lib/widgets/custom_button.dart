@@ -34,7 +34,7 @@ class CustomButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isEnabled = onPressed != null && !isLoading;
-    
+
     Widget child = Row(
       mainAxisSize: MainAxisSize.min,
       mainAxisAlignment: MainAxisAlignment.center,
@@ -56,23 +56,26 @@ class CustomButton extends StatelessWidget {
             size: 20,
             color: _getForegroundColor(context),
           ),
-        
         if ((isLoading || icon != null) && text.isNotEmpty)
           const SizedBox(width: 8),
-        
         if (text.isNotEmpty)
-          Text(
-            text,
-            style: Theme.of(context).textTheme.labelLarge?.copyWith(
-              color: _getForegroundColor(context),
-              fontWeight: FontWeight.w600,
+          Flexible(
+            child: Text(
+              text,
+              style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    color: _getForegroundColor(context),
+                    fontWeight: FontWeight.w600,
+                  ),
+              overflow:
+                  TextOverflow.ellipsis, // لضمان عدم الطفح بل إضافة نقاط ...
+              maxLines: 1,
             ),
           ),
       ],
     );
 
     Widget button;
-    
+
     switch (type) {
       case ButtonType.primary:
         button = ElevatedButton(
@@ -87,13 +90,14 @@ class CustomButton extends StatelessWidget {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(borderRadius),
             ),
-            padding: padding ?? const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            padding: padding ??
+                const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
             minimumSize: Size(width ?? 0, height),
           ),
           child: child,
         );
         break;
-        
+
       case ButtonType.secondary:
         button = ElevatedButton(
           onPressed: isEnabled ? onPressed : null,
@@ -107,13 +111,14 @@ class CustomButton extends StatelessWidget {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(borderRadius),
             ),
-            padding: padding ?? const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            padding: padding ??
+                const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
             minimumSize: Size(width ?? 0, height),
           ),
           child: child,
         );
         break;
-        
+
       case ButtonType.outline:
         button = OutlinedButton(
           onPressed: isEnabled ? onPressed : null,
@@ -121,7 +126,7 @@ class CustomButton extends StatelessWidget {
             foregroundColor: foregroundColor ?? AppColors.primary,
             disabledForegroundColor: AppColors.neutral500,
             side: BorderSide(
-              color: isEnabled 
+              color: isEnabled
                   ? (foregroundColor ?? AppColors.primary)
                   : AppColors.neutral300,
               width: 1.5,
@@ -129,13 +134,14 @@ class CustomButton extends StatelessWidget {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(borderRadius),
             ),
-            padding: padding ?? const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            padding: padding ??
+                const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
             minimumSize: Size(width ?? 0, height),
           ),
           child: child,
         );
         break;
-        
+
       case ButtonType.text:
         button = TextButton(
           onPressed: isEnabled ? onPressed : null,
@@ -145,7 +151,8 @@ class CustomButton extends StatelessWidget {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(borderRadius),
             ),
-            padding: padding ?? const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            padding: padding ??
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             minimumSize: Size(width ?? 0, height),
           ),
           child: child,
@@ -227,4 +234,3 @@ class TextOnlyButton extends CustomButton {
     super.height = 40,
   }) : super(type: ButtonType.text);
 }
-

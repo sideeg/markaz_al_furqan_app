@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class ApiService {
   late final Dio _dio;
-  static const String baseUrl = 'http://147.93.131.56:8000//api/v1';
+  static const String baseUrl = 'http://192.168.18.4:8000//api/v1';
 
   ApiService() {
     _dio = Dio(BaseOptions(

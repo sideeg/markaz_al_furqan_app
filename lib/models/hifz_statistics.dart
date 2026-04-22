@@ -26,6 +26,8 @@ class HifzStatistics {
 
   // Get evaluation percentage (out of 5)
   int get evaluationPercentage => ((averageEvaluation / 5) * 100).round();
+
+  get quranCompletionPercentage => null;
 }
 
 class CourseProgress {
@@ -43,4 +45,12 @@ class CourseProgress {
       totalPages: json['pages'] ?? 0,
     );
   }
+
+  get courseName => null;
+
+  get totalAyahs => null;
+
+  get sessionsCount => null;
+
+  get evaluationPercent => null;
 }

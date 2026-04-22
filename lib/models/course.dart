@@ -1,3 +1,6 @@
+// Path: lib/models/course.dart
+// Changes: Added is_completed (HiveField 20) and completed_at (HiveField 21)
+
 import 'package:hive/hive.dart';
 import 'mosque.dart';
 
@@ -7,63 +10,50 @@ part 'course.g.dart';
 class Course extends HiveObject {
   @HiveField(0)
   final int id;
-
   @HiveField(1)
   final String name;
-
   @HiveField(2)
   final String? description;
-
   @HiveField(3)
-  final String type; // online, open, closed
-
+  final String type;
   @HiveField(4)
   final int? mosqueId;
-
   @HiveField(5)
   final String? mosqueName;
-
   @HiveField(6)
   final String? imagePath;
-
   @HiveField(7)
   final DateTime? startDate;
-
   @HiveField(8)
   final DateTime? endDate;
-
   @HiveField(9)
   final int maxStudents;
-
   @HiveField(10)
   final int currentStudents;
-
   @HiveField(11)
   final bool isActive;
-
   @HiveField(12)
   final bool isRegistrationOpen;
-
   @HiveField(13)
   final String? requirements;
-
   @HiveField(14)
   final String? scheduleDetails;
-
   @HiveField(15)
   final int? createdBy;
-
   @HiveField(16)
   final DateTime createdAt;
-
   @HiveField(17)
   final DateTime updatedAt;
-
   @HiveField(18)
-  final String? enrollmentStatus; // For student's enrollment status
-
+  final String? enrollmentStatus;
   @HiveField(19)
-  final Mosque? mosque; // Add mosque object
+  final Mosque? mosque;
+
+  // ── New Fields ──────────────────────────────────────────────────────────────
+  @HiveField(20)
+  final bool isCompleted;
+  @HiveField(21)
+  final DateTime? completedAt;
 
   Course({
     required this.id,
@@ -86,6 +76,8 @@ class Course extends HiveObject {
     required this.updatedAt,
     this.enrollmentStatus,
     this.mosque,
+    this.isCompleted = false, // ← new
+    this.completedAt, // ← new
   });
 
   factory Course.fromJson(Map<String, dynamic> json) {
@@ -117,33 +109,38 @@ class Course extends HiveObject {
       mosque: json['mosque'] != null
           ? Mosque.fromJson(json['mosque'] as Map<String, dynamic>)
           : null,
+      // ── new fields ──
+      isCompleted: json['is_completed'] as bool? ?? false,
+      completedAt: json['completed_at'] != null
+          ? DateTime.parse(json['completed_at'] as String)
+          : null,
     );
   }
 
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'name': name,
-      'description': description,
-      'type': type,
-      'mosque_id': mosqueId,
-      'mosque_name': mosqueName,
-      'image_path': imagePath,
-      'start_date': startDate?.toIso8601String(),
-      'end_date': endDate?.toIso8601String(),
-      'max_students': maxStudents,
-      'current_students': currentStudents,
-      'is_active': isActive,
-      'is_registration_open': isRegistrationOpen,
-      'requirements': requirements,
-      'schedule_details': scheduleDetails,
-      'created_by': createdBy,
-      'created_at': createdAt.toIso8601String(),
-      'updated_at': updatedAt.toIso8601String(),
-      'enrollment_status': enrollmentStatus,
-      'mosque': mosque?.toJson(),
-    };
-  }
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'name': name,
+        'description': description,
+        'type': type,
+        'mosque_id': mosqueId,
+        'mosque_name': mosqueName,
+        'image_path': imagePath,
+        'start_date': startDate?.toIso8601String(),
+        'end_date': endDate?.toIso8601String(),
+        'max_students': maxStudents,
+        'current_students': currentStudents,
+        'is_active': isActive,
+        'is_registration_open': isRegistrationOpen,
+        'requirements': requirements,
+        'schedule_details': scheduleDetails,
+        'created_by': createdBy,
+        'created_at': createdAt.toIso8601String(),
+        'updated_at': updatedAt.toIso8601String(),
+        'enrollment_status': enrollmentStatus,
+        'mosque': mosque?.toJson(),
+        'is_completed': isCompleted,
+        'completed_at': completedAt?.toIso8601String(),
+      };
 
   Course copyWith({
     int? id,
@@ -166,58 +163,51 @@ class Course extends HiveObject {
     DateTime? updatedAt,
     String? enrollmentStatus,
     Mosque? mosque,
-  }) {
-    return Course(
-      id: id ?? this.id,
-      name: name ?? this.name,
-      description: description ?? this.description,
-      type: type ?? this.type,
-      mosqueId: mosqueId ?? this.mosqueId,
-      mosqueName: mosqueName ?? this.mosqueName,
-      imagePath: imagePath ?? this.imagePath,
-      startDate: startDate ?? this.startDate,
-      endDate: endDate ?? this.endDate,
-      maxStudents: maxStudents ?? this.maxStudents,
-      currentStudents: currentStudents ?? this.currentStudents,
-      isActive: isActive ?? this.isActive,
-      isRegistrationOpen: isRegistrationOpen ?? this.isRegistrationOpen,
-      requirements: requirements ?? this.requirements,
-      scheduleDetails: scheduleDetails ?? this.scheduleDetails,
-      createdBy: createdBy ?? this.createdBy,
-      createdAt: createdAt ?? this.createdAt,
-      updatedAt: updatedAt ?? this.updatedAt,
-      enrollmentStatus: enrollmentStatus ?? this.enrollmentStatus,
-      mosque: mosque ?? this.mosque,
-    );
-  }
+    bool? isCompleted,
+    DateTime? completedAt,
+  }) =>
+      Course(
+        id: id ?? this.id,
+        name: name ?? this.name,
+        description: description ?? this.description,
+        type: type ?? this.type,
+        mosqueId: mosqueId ?? this.mosqueId,
+        mosqueName: mosqueName ?? this.mosqueName,
+        imagePath: imagePath ?? this.imagePath,
+        startDate: startDate ?? this.startDate,
+        endDate: endDate ?? this.endDate,
+        maxStudents: maxStudents ?? this.maxStudents,
+        currentStudents: currentStudents ?? this.currentStudents,
+        isActive: isActive ?? this.isActive,
+        isRegistrationOpen: isRegistrationOpen ?? this.isRegistrationOpen,
+        requirements: requirements ?? this.requirements,
+        scheduleDetails: scheduleDetails ?? this.scheduleDetails,
+        createdBy: createdBy ?? this.createdBy,
+        createdAt: createdAt ?? this.createdAt,
+        updatedAt: updatedAt ?? this.updatedAt,
+        enrollmentStatus: enrollmentStatus ?? this.enrollmentStatus,
+        mosque: mosque ?? this.mosque,
+        isCompleted: isCompleted ?? this.isCompleted,
+        completedAt: completedAt ?? this.completedAt,
+      );
 
-  @override
-  String toString() {
-    return 'Course(id: $id, name: $name, type: $type)';
-  }
-
-  @override
-  bool operator ==(Object other) {
-    if (identical(this, other)) return true;
-    return other is Course && other.id == id;
-  }
-
-  @override
-  int get hashCode => id.hashCode;
-
-  // Helper getters
+  // ── Helper getters ──────────────────────────────────────────────────────────
   bool get isOnline => type == 'online';
   bool get isOpen => type == 'open';
   bool get isClosed => type == 'closed';
 
   bool get canEnroll =>
-      isActive && isRegistrationOpen && currentStudents < maxStudents;
+      isActive &&
+      isRegistrationOpen &&
+      !isCompleted &&
+      currentStudents < maxStudents;
 
+  bool get isFull => currentStudents >= maxStudents;
   bool get isEnrolled => enrollmentStatus != null;
   bool get isPending => enrollmentStatus == 'pending';
   bool get isApproved => enrollmentStatus == 'approved';
   bool get isRejected => enrollmentStatus == 'rejected';
-  bool get isCompleted => enrollmentStatus == 'completed';
+  bool get isEnrollCompleted => enrollmentStatus == 'completed';
   bool get isDropped => enrollmentStatus == 'dropped';
 
   String get typeDisplayName {
@@ -250,11 +240,15 @@ class Course extends HiveObject {
     }
   }
 
-  double get enrollmentPercentage {
-    if (maxStudents == 0) return 0.0;
-    return (currentStudents / maxStudents).clamp(0.0, 1.0);
-  }
+  double get enrollmentPercentage =>
+      maxStudents == 0 ? 0.0 : (currentStudents / maxStudents).clamp(0.0, 1.0);
 
   int get availableSlots =>
       (maxStudents - currentStudents).clamp(0, maxStudents);
+
+  /// Human-readable completed date for display
+  String get completedAtFormatted {
+    if (completedAt == null) return '';
+    return '${completedAt!.day}/${completedAt!.month}/${completedAt!.year}';
+  }
 }

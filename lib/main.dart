@@ -1,3 +1,5 @@
+// Path: lib/main.dart
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -30,16 +32,6 @@ void main() async {
     DeviceOrientation.portraitDown,
   ]);
 
-  // Set system UI overlay style
-  SystemChrome.setSystemUIOverlayStyle(
-    const SystemUiOverlayStyle(
-      statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.dark,
-      systemNavigationBarColor: AppColors.background,
-      systemNavigationBarIconBrightness: Brightness.dark,
-    ),
-  );
-
   runApp(const ProviderScope(child: MarkazAlFurqanApp()));
 }
 
@@ -66,10 +58,10 @@ class MarkazAlFurqanApp extends ConsumerWidget {
         GlobalCupertinoLocalizations.delegate,
       ],
 
-      // Theme
+      // Themes from AppThemes class
       theme: AppThemes.lightTheme,
       darkTheme: AppThemes.darkTheme,
-      themeMode: ThemeMode.light,
+      themeMode: ThemeMode.system,
 
       // Routing
       routerConfig: _createRouter(authState),
@@ -114,19 +106,47 @@ class MarkazAlFurqanApp extends ConsumerWidget {
           routes: [
             GoRoute(
               path: '/student/home',
-              builder: (context, state) => const HomeScreen(),
+              pageBuilder: (context, state) => CustomTransitionPage(
+                key: state.pageKey,
+                child: const HomeScreen(),
+                transitionsBuilder:
+                    (context, animation, secondaryAnimation, child) {
+                  return FadeTransition(opacity: animation, child: child);
+                },
+              ),
             ),
             GoRoute(
               path: '/student/courses',
-              builder: (context, state) => const MyCoursesScreen(),
+              pageBuilder: (context, state) => CustomTransitionPage(
+                key: state.pageKey,
+                child: const MyCoursesScreen(),
+                transitionsBuilder:
+                    (context, animation, secondaryAnimation, child) {
+                  return FadeTransition(opacity: animation, child: child);
+                },
+              ),
             ),
             GoRoute(
               path: '/student/progress',
-              builder: (context, state) => const ProgressScreen(),
+              pageBuilder: (context, state) => CustomTransitionPage(
+                key: state.pageKey,
+                child: const ProgressScreen(),
+                transitionsBuilder:
+                    (context, animation, secondaryAnimation, child) {
+                  return FadeTransition(opacity: animation, child: child);
+                },
+              ),
             ),
             GoRoute(
               path: '/student/profile',
-              builder: (context, state) => const ProfileScreen(),
+              pageBuilder: (context, state) => CustomTransitionPage(
+                key: state.pageKey,
+                child: const ProfileScreen(),
+                transitionsBuilder:
+                    (context, animation, secondaryAnimation, child) {
+                  return FadeTransition(opacity: animation, child: child);
+                },
+              ),
             ),
           ],
         ),
@@ -135,6 +155,7 @@ class MarkazAlFurqanApp extends ConsumerWidget {
   }
 }
 
+// ─── Student Main Screen with AnnotatedRegion ────────────────────────────────
 class StudentMainScreen extends StatelessWidget {
   final Widget child;
 
@@ -142,49 +163,127 @@ class StudentMainScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: child,
-      bottomNavigationBar: const StudentBottomNavBar(),
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    // الألوان المستقاة من الستايل الخاص بك (Deep Forest للداكن والبيج للفاتح)
+    final navBarColor =
+        isDark ? const Color(0xFF0C1E16) : const Color(0xFFFFFFFF);
+    final navBarIconBrightness = isDark ? Brightness.light : Brightness.dark;
+
+    // AnnotatedRegion تضمن تطبيق ألوان الـ System Bar مباشرة وتتغير فوراً عند تبديل الثيم
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: navBarIconBrightness,
+        systemNavigationBarColor: navBarColor,
+        systemNavigationBarIconBrightness: navBarIconBrightness,
+        systemNavigationBarDividerColor: Colors.transparent,
+      ),
+      child: Scaffold(
+        body: child,
+        bottomNavigationBar: const StudentBottomNavBar(),
+      ),
     );
   }
 }
 
+// ─── Animated Bottom Nav Bar ───────────────────────────────────────────────
 class StudentBottomNavBar extends StatelessWidget {
   const StudentBottomNavBar({super.key});
 
   @override
   Widget build(BuildContext context) {
     final currentLocation = GoRouterState.of(context).matchedLocation;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return BottomNavigationBar(
-      type: BottomNavigationBarType.fixed,
-      backgroundColor: AppColors.surface,
-      selectedItemColor: AppColors.primary,
-      unselectedItemColor: AppColors.onSurfaceVariant,
-      currentIndex: _getCurrentIndex(currentLocation),
-      onTap: (index) => _onItemTapped(context, index),
-      items: const [
-        BottomNavigationBarItem(
-          icon: Icon(Icons.home_outlined),
-          activeIcon: Icon(Icons.home),
-          label: 'الرئيسية',
+    // استخراج ألوانك المميزة
+    final bgColor = isDark ? const Color(0xFF0C1E16) : Colors.white;
+    final activeColor = isDark
+        ? const Color(0xFFC4973A)
+        : const Color(0xFF0E5A38); // ذهبي في الداكن، غابة في الفاتح
+    final inactiveColor =
+        isDark ? const Color(0x77F0E6C8) : const Color(0xFF88A090);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: bgColor,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(isDark ? 0.3 : 0.05),
+            blurRadius: 20,
+            offset: const Offset(0, -5),
+          ),
+        ],
+      ),
+      child: BottomNavigationBar(
+        type: BottomNavigationBarType.fixed,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        selectedItemColor: activeColor,
+        unselectedItemColor: inactiveColor,
+        selectedLabelStyle: const TextStyle(
+          fontFamily: 'Tajawal',
+          fontSize: 12,
+          fontWeight: FontWeight.bold,
         ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.book_outlined),
-          activeIcon: Icon(Icons.book),
-          label: 'دوراتي',
+        unselectedLabelStyle: const TextStyle(
+          fontFamily: 'Tajawal',
+          fontSize: 11,
+          fontWeight: FontWeight.w500,
         ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.trending_up_outlined),
-          activeIcon: Icon(Icons.trending_up),
-          label: 'التقدم',
+        currentIndex: _getCurrentIndex(currentLocation),
+        onTap: (index) => _onItemTapped(context, index),
+        items: [
+          _buildNavItem(0, _getCurrentIndex(currentLocation),
+              Icons.home_rounded, Icons.home_outlined, 'الرئيسية', activeColor),
+          _buildNavItem(
+              1,
+              _getCurrentIndex(currentLocation),
+              Icons.menu_book_rounded,
+              Icons.book_outlined,
+              'دوراتي',
+              activeColor),
+          _buildNavItem(
+              2,
+              _getCurrentIndex(currentLocation),
+              Icons.trending_up_rounded,
+              Icons.trending_up_outlined,
+              'التقدم',
+              activeColor),
+          _buildNavItem(
+              3,
+              _getCurrentIndex(currentLocation),
+              Icons.person_rounded,
+              Icons.person_outline_rounded,
+              'حسابي',
+              activeColor),
+        ],
+      ),
+    );
+  }
+
+  BottomNavigationBarItem _buildNavItem(
+      int index,
+      int currentIndex,
+      IconData activeIcon,
+      IconData inactiveIcon,
+      String label,
+      Color activeColor) {
+    final isSelected = index == currentIndex;
+
+    return BottomNavigationBarItem(
+      // استخدام AnimatedContainer داخل الأيقونة لإضافة حركة عند التبديل
+      icon: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOutCubic,
+        padding: EdgeInsets.only(
+            bottom: isSelected ? 4.0 : 0.0, top: isSelected ? 0.0 : 4.0),
+        child: Icon(
+          isSelected ? activeIcon : inactiveIcon,
+          size: isSelected ? 26 : 24,
         ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.person_outline),
-          activeIcon: Icon(Icons.person),
-          label: 'الملف الشخصي',
-        ),
-      ],
+      ),
+      label: label,
     );
   }
 
