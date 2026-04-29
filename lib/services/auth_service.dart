@@ -4,6 +4,8 @@ import 'package:dio/dio.dart';
 import '../models/user.dart';
 import 'api_service.dart';
 import 'storage_service.dart';
+import 'dart:io';
+import 'fcm_service.dart';
 
 // Auth State
 class AuthState {
@@ -11,12 +13,14 @@ class AuthState {
   final String? token;
   final bool isLoading;
   final String? error;
+  final String? minimumRequiredVersion;
 
   const AuthState({
     this.user,
     this.token,
     this.isLoading = false,
     this.error,
+    this.minimumRequiredVersion,
   });
 
   bool get isAuthenticated => user != null && token != null;
@@ -26,12 +30,15 @@ class AuthState {
     String? token,
     bool? isLoading,
     String? error,
+    String? minimumRequiredVersion,
   }) {
     return AuthState(
       user: user ?? this.user,
       token: token ?? this.token,
       isLoading: isLoading ?? this.isLoading,
       error: error,
+      minimumRequiredVersion:
+          minimumRequiredVersion ?? this.minimumRequiredVersion,
     );
   }
 }
@@ -47,11 +54,44 @@ class AuthService extends StateNotifier<AuthState> {
     _initializeAuth();
   }
 
+  Future<void> uploadFcmToken() async {
+    if (state.token == null) {
+      return; // لا نرسل التوكن إذا لم يكن المستخدم مسجلاً
+    }
+
+    try {
+      final fcmToken = await FcmService.instance.getToken();
+      if (fcmToken != null) {
+        await _apiService.post('/store-token', data: {
+          'fcm_token': fcmToken,
+          'device_type': Platform.isAndroid ? 'android' : 'ios',
+        });
+        print("FCM Token updated on server");
+      }
+    } catch (e) {
+      print("Error uploading FCM token: $e");
+      // لا نغير حالة AuthState هنا لأن فشل التوكن لا يعني فشل تسجيل الدخول
+    }
+  }
+
+  // دالة لتحديث رقم الإصدار المطلوب في أي وقت (أثناء استخدام التطبيق)
+  Future<void> updateMinimumVersion(String newVersion) async {
+    // إذا كان الرقم القادم مختلفاً عن المحفوظ
+    if (state.minimumRequiredVersion != newVersion) {
+      // حفظه في التخزين المحلي
+      await _storage.write(key: 'min_app_version', value: newVersion);
+
+      // تحديث الحالة (هذا سيجعل الـ GoRouter يقوم بإعادة بناء وتوجيه المستخدم قسراً إذا احتاج التحديث)
+      state = state.copyWith(minimumRequiredVersion: newVersion);
+    }
+  }
+
   Future<void> _initializeAuth() async {
     state = state.copyWith(isLoading: true);
 
     try {
       final token = await _storage.read(key: 'auth_token');
+      final savedVersion = await _storage.read(key: 'min_app_version');
       final userData = await _storageService.getUser();
 
       if (token != null && userData != null) {
@@ -59,8 +99,10 @@ class AuthService extends StateNotifier<AuthState> {
         state = state.copyWith(
           user: userData,
           token: token,
+          minimumRequiredVersion: savedVersion,
           isLoading: false,
         );
+        uploadFcmToken();
       } else {
         state = state.copyWith(isLoading: false);
       }
@@ -84,11 +126,15 @@ class AuthService extends StateNotifier<AuthState> {
       if (response.data['success'] == true) {
         final userData = response.data['data']['user'];
         final token = response.data['data']['token'];
+        final minVersion = response.data['data']['minimum_required_version'];
 
         final user = User.fromJson(userData);
 
         // Store token and user data
         await _storage.write(key: 'auth_token', value: token);
+        if (minVersion != null) {
+          await _storage.write(key: 'min_app_version', value: minVersion);
+        }
         await _storageService.saveUser(user);
 
         // Set token for future API calls
@@ -97,9 +143,10 @@ class AuthService extends StateNotifier<AuthState> {
         state = state.copyWith(
           user: user,
           token: token,
+          minimumRequiredVersion: minVersion,
           isLoading: false,
         );
-
+        await uploadFcmToken();
         return true;
       } else {
         state = state.copyWith(
@@ -125,6 +172,8 @@ class AuthService extends StateNotifier<AuthState> {
       );
       return false;
     } catch (e) {
+      print('LOGIN ERROR: $e');
+      print('STACK: ${e.toString()}');
       state = state.copyWith(
         isLoading: false,
         error: 'حدث خطأ غير متوقع',
@@ -138,6 +187,7 @@ class AuthService extends StateNotifier<AuthState> {
     required String email,
     required String password,
     required String passwordConfirmation,
+    String? nationality,
     String? phone,
     String? nationalId,
     String? qiraat,
@@ -153,6 +203,7 @@ class AuthService extends StateNotifier<AuthState> {
         'password_confirmation': passwordConfirmation,
         'phone': phone,
         'national_id': nationalId,
+        'nationality': nationality,
         'qiraat': qiraat,
         'gender': gender,
       });
@@ -175,7 +226,7 @@ class AuthService extends StateNotifier<AuthState> {
           token: token,
           isLoading: false,
         );
-
+        await uploadFcmToken();
         return true;
       } else {
         state = state.copyWith(
@@ -279,6 +330,7 @@ class AuthService extends StateNotifier<AuthState> {
 
     // Clear local storage
     await _storage.delete(key: 'auth_token');
+    await _storage.delete(key: 'min_app_version');
     await _storageService.clearUser();
 
     // Clear API token

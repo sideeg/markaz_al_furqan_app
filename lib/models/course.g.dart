@@ -23,7 +23,7 @@ class CourseAdapter extends TypeAdapter<Course> {
       type: fields[3] as String,
       mosqueId: fields[4] as int?,
       mosqueName: fields[5] as String?,
-      imagePath: fields[6] as String?,
+      image_url: fields[6] as String?,
       startDate: fields[7] as DateTime?,
       endDate: fields[8] as DateTime?,
       maxStudents: fields[9] as int,
@@ -57,7 +57,7 @@ class CourseAdapter extends TypeAdapter<Course> {
       ..writeByte(5)
       ..write(obj.mosqueName)
       ..writeByte(6)
-      ..write(obj.imagePath)
+      ..write(obj.image_url)
       ..writeByte(7)
       ..write(obj.startDate)
       ..writeByte(8)

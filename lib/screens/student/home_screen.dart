@@ -1,5 +1,3 @@
-// Path: lib/presentation/screens/student/home_screen.dart
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -44,10 +42,6 @@ class _TC {
   Color get success => const Color(0xFF059669);
   Color get warning => const Color(0xFFF59E0B);
   Color get error => const Color(0xFFDC2626);
-  Color get statPending =>
-      isDark ? const Color(0xFF1A3020) : const Color(0xFFEDF6EF);
-  Color get statApproved =>
-      isDark ? const Color(0xFF0D2A1C) : const Color(0xFFE8F5EE);
 }
 
 // ─── Home Screen ──────────────────────────────────────────────────────────────
@@ -65,15 +59,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   String _selectedFilter = 'all';
   String _searchQuery = '';
   DateTime? _lastRefreshTime;
-
-  // Header collapse animation driven by scroll
-  double _headerCollapse = 0.0; // 0 = expanded, 1 = collapsed
+  double _headerCollapse = 0.0;
+  bool _coursesHaveAnimated = false;
 
   late AnimationController _headerGlowCtrl;
   late Animation<double> _headerGlow;
-
-  // Track whether courses have already animated in (avoid re-animating on filter change)
-  bool _coursesHaveAnimated = false;
 
   static const double _kHeaderMax = 200.0;
   static const double _kHeaderMin = 72.0;
@@ -82,14 +72,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-
     _headerGlowCtrl = AnimationController(
       duration: const Duration(milliseconds: 2600),
       vsync: this,
     )..repeat(reverse: true);
     _headerGlow = Tween<double>(begin: 0.4, end: 1.0).animate(
         CurvedAnimation(parent: _headerGlowCtrl, curve: Curves.easeInOut));
-
     _scrollCtrl.addListener(_onScroll);
   }
 
@@ -129,19 +117,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     return Directionality(
       textDirection: TextDirection.rtl,
       child: AnnotatedRegion<SystemUiOverlayStyle>(
-        value: SystemUiOverlayStyle(
+        value: const SystemUiOverlayStyle(
           statusBarColor: Colors.transparent,
-          statusBarIconBrightness:
-              tc.isDark ? Brightness.light : Brightness.light,
+          statusBarIconBrightness: Brightness.light,
         ),
         child: Scaffold(
           backgroundColor: tc.bg,
           body: Stack(
             children: [
-              // Background geometry
               Positioned.fill(child: _HomeBgPainter(tc: tc)),
-
-              // Main content
               RefreshIndicator(
                 onRefresh: _refreshData,
                 color: tc.gold,
@@ -150,7 +134,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                   controller: _scrollCtrl,
                   physics: const BouncingScrollPhysics(),
                   slivers: [
-                    // ── Collapsible Hero Header ────────────────────────────
+                    // ── Header ─────────────────────────────────────────────
                     SliverPersistentHeader(
                       pinned: true,
                       delegate: _HomeHeaderDelegate(
@@ -180,7 +164,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                       ),
                     ),
 
-                    // ── Stats row ──────────────────────────────────────────
+                    // ── Stats ──────────────────────────────────────────────
                     SliverToBoxAdapter(
                       child: coursesAsync.maybeWhen(
                         data: (courses) => _StatsRow(tc: tc, courses: courses),
@@ -188,7 +172,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                       ),
                     ),
 
-                    // ── Search bar ────────────────────────────────────────
+                    // ── Search ─────────────────────────────────────────────
                     SliverToBoxAdapter(
                       child: Padding(
                         padding: const EdgeInsets.fromLTRB(20, 4, 20, 0),
@@ -200,7 +184,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                       ),
                     ),
 
-                    // ── Filter chips ──────────────────────────────────────
+                    // ── Filters ────────────────────────────────────────────
                     SliverToBoxAdapter(
                       child: _GoldFilterRow(
                         tc: tc,
@@ -212,7 +196,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                       ),
                     ),
 
-                    // ── Last refreshed hint ────────────────────────────────
+                    // ── Last refreshed ─────────────────────────────────────
                     if (_lastRefreshTime != null)
                       SliverToBoxAdapter(
                         child: Padding(
@@ -228,7 +212,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                         ),
                       ),
 
-                    // ── Course grid ───────────────────────────────────────
+                    // ── Course grid ────────────────────────────────────────
                     coursesAsync.when(
                       data: (courses) {
                         final filtered = _filterCourses(courses);
@@ -237,7 +221,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                             child: _EmptyState(tc: tc, query: _searchQuery),
                           );
                         }
-                        // Mark as animated after first render
                         WidgetsBinding.instance.addPostFrameCallback((_) {
                           if (!_coursesHaveAnimated && mounted) {
                             setState(() => _coursesHaveAnimated = true);
@@ -278,9 +261,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                       ),
                     ),
 
-                    const SliverToBoxAdapter(
-                      child: SizedBox(height: 100),
-                    ),
+                    const SliverToBoxAdapter(child: SizedBox(height: 100)),
                   ],
                 ),
               ),
@@ -291,7 +272,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     );
   }
 
-  // ── Helpers ──────────────────────────────────────────────────────────────────
   Future<void> _refreshData() async {
     ref.invalidate(coursesProvider);
     setState(() {
@@ -302,7 +282,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
   List<Course> _filterCourses(List<Course> courses) {
     var list = courses.where((c) => c.isActive || c.isCompleted).toList();
-
     if (_selectedFilter == 'completed') {
       list = list.where((c) => c.isCompleted).toList();
     } else if (_selectedFilter != 'all') {
@@ -310,7 +289,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           .where((c) => c.type == _selectedFilter && !c.isCompleted)
           .toList();
     }
-
     if (_searchQuery.isNotEmpty) {
       final q = _searchQuery.toLowerCase();
       list = list
@@ -320,7 +298,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               (c.mosqueName?.toLowerCase().contains(q) ?? false))
           .toList();
     }
-
     return list;
   }
 
@@ -350,7 +327,7 @@ class _HomeHeaderDelegate extends SliverPersistentHeaderDelegate {
   final _TC tc;
   final dynamic user;
   final Animation<double> glow;
-  final double collapseAmt; // 0 = expanded, 1 = fully collapsed
+  final double collapseAmt;
   final VoidCallback onProfile;
   final VoidCallback? onRefresh;
   final VoidCallback onNotify;
@@ -367,8 +344,8 @@ class _HomeHeaderDelegate extends SliverPersistentHeaderDelegate {
     required this.onRefresh,
     required this.onNotify,
     required this.isLoading,
-    required this.minHeight, // 👈 تعديل
-    required this.maxHeight, // 👈 تعديل
+    required this.minHeight,
+    required this.maxHeight,
   });
 
   @override
@@ -397,8 +374,8 @@ class _HomeHeaderDelegate extends SliverPersistentHeaderDelegate {
             colors: [tc.headerG1, tc.headerG2],
           ),
           borderRadius: BorderRadius.only(
-            bottomLeft: Radius.circular(lerpDouble(36, 0, progress)),
-            bottomRight: Radius.circular(lerpDouble(36, 0, progress)),
+            bottomLeft: Radius.circular(_lerp(36, 0, progress)),
+            bottomRight: Radius.circular(_lerp(36, 0, progress)),
           ),
           boxShadow: [
             BoxShadow(
@@ -410,18 +387,13 @@ class _HomeHeaderDelegate extends SliverPersistentHeaderDelegate {
         ),
         child: Stack(
           children: [
-            // Background Islamic geometry (fades out on collapse)
             if (expandedOpacity > 0)
               Positioned.fill(
                 child: Opacity(
                   opacity: expandedOpacity,
-                  child: CustomPaint(
-                    painter: _HeaderPatternPainter(tc: tc),
-                  ),
+                  child: CustomPaint(painter: _HeaderPatternPainter(tc: tc)),
                 ),
               ),
-
-            // Collapsed app bar content (always visible)
             Positioned(
               top: 0,
               left: 0,
@@ -434,15 +406,11 @@ class _HomeHeaderDelegate extends SliverPersistentHeaderDelegate {
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Row(
                       children: [
-                        // Avatar
                         GestureDetector(
                           onTap: onProfile,
                           child: _AvatarButton(tc: tc, user: user, glow: glow),
                         ),
-
                         const SizedBox(width: 12),
-
-                        // Greeting (shrinks on collapse)
                         Expanded(
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
@@ -457,7 +425,7 @@ class _HomeHeaderDelegate extends SliverPersistentHeaderDelegate {
                                 user?.name.split(' ').first ?? 'الطالب',
                                 style: TextStyle(
                                   fontFamily: 'Amiri',
-                                  fontSize: lerpDouble(17, 14, progress),
+                                  fontSize: _lerp(17, 14, progress),
                                   fontWeight: FontWeight.bold,
                                   color: tc.isDark
                                       ? const Color(0xFFF0E6C8)
@@ -469,8 +437,6 @@ class _HomeHeaderDelegate extends SliverPersistentHeaderDelegate {
                             ],
                           ),
                         ),
-
-                        // Refresh
                         _IconBtn(
                           tc: tc,
                           icon: isLoading
@@ -479,8 +445,6 @@ class _HomeHeaderDelegate extends SliverPersistentHeaderDelegate {
                           onTap: isLoading ? null : onRefresh,
                           spinning: isLoading,
                         ),
-
-                        // Notifications
                         _IconBtn(
                             tc: tc,
                             icon: Icons.notifications_outlined,
@@ -491,8 +455,6 @@ class _HomeHeaderDelegate extends SliverPersistentHeaderDelegate {
                 ),
               ),
             ),
-
-            // Expanded content: Bismillah + subtitle
             if (expandedOpacity > 0)
               Positioned(
                 bottom: 14,
@@ -528,7 +490,7 @@ class _HomeHeaderDelegate extends SliverPersistentHeaderDelegate {
     );
   }
 
-  double lerpDouble(double a, double b, double t) => a + (b - a) * t;
+  double _lerp(double a, double b, double t) => a + (b - a) * t;
 }
 
 // ─── Avatar Button ────────────────────────────────────────────────────────────
@@ -548,9 +510,8 @@ class _AvatarButton extends StatelessWidget {
         height: 40,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          gradient: RadialGradient(
-            colors: [tc.headerG1, const Color(0xFF071A14)],
-          ),
+          gradient:
+              RadialGradient(colors: [tc.headerG1, const Color(0xFF071A14)]),
           border: Border.all(
             color: tc.gold.withOpacity(0.35 + 0.25 * glow.value),
             width: 1.5,
@@ -579,7 +540,7 @@ class _AvatarButton extends StatelessWidget {
   }
 }
 
-// ─── Header Icon Button ───────────────────────────────────────────────────────
+// ─── Icon Button ──────────────────────────────────────────────────────────────
 class _IconBtn extends StatefulWidget {
   final _TC tc;
   final IconData icon;
@@ -634,18 +595,18 @@ class _IconBtnState extends State<_IconBtn>
 
   @override
   Widget build(BuildContext context) {
-    Widget icon = Icon(widget.icon,
+    Widget iconWidget = Icon(widget.icon,
         color: widget.onTap == null
             ? widget.tc.gold.withOpacity(0.3)
             : widget.tc.gold.withOpacity(0.7),
         size: 20);
 
     if (widget.spinning && _spin != null) {
-      icon = AnimatedBuilder(
+      iconWidget = AnimatedBuilder(
         animation: _spin!,
         builder: (_, child) =>
             Transform.rotate(angle: _spin!.value, child: child),
-        child: icon,
+        child: iconWidget,
       );
     }
 
@@ -658,7 +619,7 @@ class _IconBtnState extends State<_IconBtn>
           shape: BoxShape.circle,
           color: widget.tc.gold.withOpacity(0.08),
         ),
-        child: Center(child: icon),
+        child: Center(child: iconWidget),
       ),
     );
   }
@@ -698,7 +659,7 @@ class _StatsRow extends StatelessWidget {
           const SizedBox(width: 8),
           _StatChip(
               tc: tc,
-              label: 'قيد المراجعة',
+              label: 'مراجعة',
               value: pending,
               icon: Icons.schedule_rounded,
               color: tc.warning),
@@ -1100,7 +1061,7 @@ class _ShimmerCard extends StatelessWidget {
   }
 }
 
-// ─── Course Details Bottom Sheet ───────────────────────────────────────────────
+// ─── Course Details Bottom Sheet ──────────────────────────────────────────────
 class _CourseDetailsSheet extends ConsumerWidget {
   final Course course;
   const _CourseDetailsSheet({required this.course});
@@ -1118,7 +1079,7 @@ class _CourseDetailsSheet extends ConsumerWidget {
       ),
       child: Column(
         children: [
-          // Handle
+          // Handle bar
           Container(
             width: 40,
             height: 4,
@@ -1136,25 +1097,7 @@ class _CourseDetailsSheet extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Image
-                  if (course.imagePath != null)
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(16),
-                      child: CachedNetworkImage(
-                        imageUrl: course.imagePath!,
-                        height: 180,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                        errorWidget: (context, url, error) =>
-                            _SheetPlaceholder(tc: tc),
-                      ),
-                    )
-                  else
-                    _SheetPlaceholder(tc: tc),
-
-                  const SizedBox(height: 16),
-
-                  // Completed / Closed banners
+                  // ── Status Banners ───────────────────────────────────────
                   if (course.isCompleted)
                     _StatusBanner(
                         tc: tc,
@@ -1188,50 +1131,51 @@ class _CourseDetailsSheet extends ConsumerWidget {
                         label: course.enrollmentStatusDisplayName,
                         color: course.isApproved ? tc.success : tc.warning),
 
-                  // Title
-                  Text(course.name,
-                      style: TextStyle(
-                          fontFamily: 'Amiri',
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                          color: tc.primaryText)),
+                  // ── Course Title ─────────────────────────────────────────
+                  Text(
+                    course.name,
+                    style: TextStyle(
+                        fontFamily: 'Amiri',
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: tc.primaryText),
+                  ),
 
                   const SizedBox(height: 10),
 
-                  // Type + mosque row
-                  Row(children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: tc.goldFaint,
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: tc.goldBorder),
+                  // ── Type badge (standalone, no mosque text here) ──────────
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: tc.goldFaint,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: tc.goldBorder),
+                        ),
+                        child: Text(course.typeDisplayName,
+                            style: TextStyle(
+                                fontFamily: 'Tajawal',
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: tc.gold)),
                       ),
-                      child: Text(course.typeDisplayName,
-                          style: TextStyle(
-                              fontFamily: 'Tajawal',
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
-                              color: tc.gold)),
-                    ),
-                    if (course.mosqueName != null) ...[
-                      const SizedBox(width: 8),
-                      Icon(Icons.location_on_outlined,
-                          size: 14, color: tc.mutedText),
-                      const SizedBox(width: 3),
-                      Expanded(
-                          child: Text(course.mosqueName!,
-                              style: TextStyle(
-                                  fontFamily: 'Tajawal',
-                                  fontSize: 12,
-                                  color: tc.mutedText),
-                              overflow: TextOverflow.ellipsis)),
                     ],
-                  ]),
+                  ),
 
                   const SizedBox(height: 16),
 
+                  // ── Mosque Strip (the new creative section) ───────────────
+                  if (course.mosque != null) ...[
+                    _SheetSection(
+                        tc: tc, title: 'المسجد', icon: Icons.mosque_rounded),
+                    const SizedBox(height: 10),
+                    _MosqueStrip(mosque: course.mosque!, tc: tc),
+                    const SizedBox(height: 16),
+                  ],
+
+                  // ── Description ──────────────────────────────────────────
                   if (course.description != null) ...[
                     _SheetSection(
                         tc: tc,
@@ -1247,43 +1191,64 @@ class _CourseDetailsSheet extends ConsumerWidget {
                     const SizedBox(height: 16),
                   ],
 
+                  // ── Course Info ──────────────────────────────────────────
                   _SheetSection(
                       tc: tc,
                       title: 'معلومات الدورة',
                       icon: Icons.info_outline_rounded),
                   const SizedBox(height: 10),
+
                   _InfoRow(
                       tc: tc,
+                      icon: Icons.people_outline_rounded,
                       label: 'عدد الطلاب',
                       value: '${course.currentStudents}/${course.maxStudents}'),
                   if (course.startDate != null)
                     _InfoRow(
                         tc: tc,
+                        icon: Icons.calendar_today_outlined,
                         label: 'تاريخ البداية',
                         value:
                             '${course.startDate!.day}/${course.startDate!.month}/${course.startDate!.year}'),
                   if (course.endDate != null)
                     _InfoRow(
                         tc: tc,
+                        icon: Icons.event_outlined,
                         label: 'تاريخ النهاية',
                         value:
                             '${course.endDate!.day}/${course.endDate!.month}/${course.endDate!.year}'),
                   if (course.isCompleted && course.completedAt != null)
                     _InfoRow(
                         tc: tc,
+                        icon: Icons.verified_outlined,
                         label: 'تاريخ الانتهاء',
                         value: course.completedAtFormatted),
                   if (course.scheduleDetails != null)
                     _InfoRow(
                         tc: tc,
+                        icon: Icons.schedule_outlined,
                         label: 'المواعيد',
                         value: course.scheduleDetails!),
+                  if (course.requirements != null) ...[
+                    const SizedBox(height: 16),
+                    _SheetSection(
+                        tc: tc,
+                        title: 'المتطلبات',
+                        icon: Icons.checklist_rounded),
+                    const SizedBox(height: 8),
+                    Text(course.requirements!,
+                        style: TextStyle(
+                            fontFamily: 'Tajawal',
+                            fontSize: 13,
+                            color: tc.primaryText,
+                            height: 1.7)),
+                  ],
                 ],
               ),
             ),
           ),
 
-          // Enroll button
+          // ── Enroll Button ──────────────────────────────────────────────
           if (!course.isEnrolled && course.canEnroll)
             Padding(
               padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
@@ -1353,6 +1318,222 @@ class _CourseDetailsSheet extends ConsumerWidget {
         ));
       }
     }
+  }
+}
+
+// ─── Mosque Strip ─────────────────────────────────────────────────────────────
+// The "creative" mosque card shown inside the details sheet.
+class _MosqueStrip extends StatelessWidget {
+  final dynamic mosque; // your Mosque model
+  final _TC tc;
+  const _MosqueStrip({required this.mosque, required this.tc});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: tc.goldBorder),
+        color: tc.goldFaint,
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        children: [
+          // ── Top: image + name + address ──────────────────────────────────
+          IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Mosque thumbnail (square, 80px)
+                SizedBox(
+                  width: 80,
+                  child: mosque.image_url != null
+                      ? CachedNetworkImage(
+                          imageUrl: mosque.image_url as String,
+                          fit: BoxFit.cover,
+                          errorWidget: (_, __, ___) =>
+                              _MosqueFallbackThumb(tc: tc),
+                        )
+                      : _MosqueFallbackThumb(tc: tc),
+                ),
+
+                // Vertical gold divider
+                Container(width: 1, color: tc.goldBorder),
+
+                // Name + address
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        // Mosque label pill
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 7, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: tc.gold.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(color: tc.goldBorder),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.mosque_rounded,
+                                  size: 10, color: tc.gold),
+                              const SizedBox(width: 4),
+                              Text('مسجد',
+                                  style: TextStyle(
+                                      fontFamily: 'Tajawal',
+                                      fontSize: 9,
+                                      color: tc.gold,
+                                      fontWeight: FontWeight.w700)),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          mosque.name as String,
+                          style: TextStyle(
+                              fontFamily: 'Amiri',
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: tc.primaryText),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        if ((mosque.fullAddress as String).isNotEmpty) ...[
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              Icon(Icons.location_on_outlined,
+                                  size: 12, color: tc.goldDim),
+                              const SizedBox(width: 4),
+                              Expanded(
+                                child: Text(
+                                  mosque.fullAddress as String,
+                                  style: TextStyle(
+                                      fontFamily: 'Tajawal',
+                                      fontSize: 11,
+                                      color: tc.mutedText),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // ── Bottom: contact + map pills ──────────────────────────────────
+          if ((mosque.hasContactInfo as bool) || (mosque.hasLocation as bool))
+            Container(
+              decoration: BoxDecoration(
+                border: Border(top: BorderSide(color: tc.goldBorder)),
+                color: tc.card.withOpacity(0.5),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              child: Row(
+                children: [
+                  if (mosque.phone != null)
+                    _MosquePill(
+                      tc: tc,
+                      icon: Icons.phone_outlined,
+                      label: mosque.phone as String,
+                    ),
+                  if (mosque.phone != null && mosque.email != null)
+                    const SizedBox(width: 8),
+                  if (mosque.email != null)
+                    Expanded(
+                      child: _MosquePill(
+                        tc: tc,
+                        icon: Icons.email_outlined,
+                        label: mosque.email as String,
+                      ),
+                    ),
+                  if ((mosque.hasContactInfo as bool) &&
+                      (mosque.hasLocation as bool))
+                    const SizedBox(width: 8),
+                  if (mosque.hasLocation as bool)
+                    _MosquePill(
+                      tc: tc,
+                      icon: Icons.map_outlined,
+                      label: 'خريطة',
+                      isAccent: true,
+                    ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MosqueFallbackThumb extends StatelessWidget {
+  final _TC tc;
+  const _MosqueFallbackThumb({required this.tc});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: tc.gold.withOpacity(0.08),
+      child: Center(
+        child: Icon(Icons.mosque_rounded, size: 28, color: tc.goldDim),
+      ),
+    );
+  }
+}
+
+class _MosquePill extends StatelessWidget {
+  final _TC tc;
+  final IconData icon;
+  final String label;
+  final bool isAccent;
+  const _MosquePill({
+    required this.tc,
+    required this.icon,
+    required this.label,
+    this.isAccent = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: isAccent ? tc.gold.withOpacity(0.12) : tc.goldFaint,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+            color: isAccent ? tc.gold.withOpacity(0.4) : tc.goldBorder),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12, color: isAccent ? tc.gold : tc.goldDim),
+          const SizedBox(width: 5),
+          Flexible(
+            child: Text(
+              label,
+              style: TextStyle(
+                  fontFamily: 'Tajawal',
+                  fontSize: 11,
+                  color: isAccent ? tc.gold : tc.mutedText,
+                  fontWeight: isAccent ? FontWeight.w700 : FontWeight.w400),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 
@@ -1442,51 +1623,61 @@ class _SheetSection extends StatelessWidget {
                 color: tc.primaryText)),
         const SizedBox(width: 10),
         Expanded(
-            child: Container(
-                height: 1,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [tc.goldBorder, Colors.transparent],
-                  ),
-                ))),
+          child: Container(
+            height: 1,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [tc.goldBorder, Colors.transparent],
+              ),
+            ),
+          ),
+        ),
       ],
     );
   }
 }
 
+// Updated _InfoRow now includes an icon for visual polish
 class _InfoRow extends StatelessWidget {
   final _TC tc;
   final String label, value;
-  const _InfoRow({required this.tc, required this.label, required this.value});
+  final IconData icon;
+  const _InfoRow(
+      {required this.tc,
+      required this.label,
+      required this.value,
+      required this.icon});
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 5),
+      padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Icon(icon, size: 14, color: tc.goldDim),
+          const SizedBox(width: 8),
           SizedBox(
-              width: 90,
-              child: Text(label,
-                  style: TextStyle(
-                      fontFamily: 'Tajawal',
-                      fontSize: 12,
-                      color: tc.mutedText))),
+            width: 82,
+            child: Text(label,
+                style: TextStyle(
+                    fontFamily: 'Tajawal', fontSize: 12, color: tc.mutedText)),
+          ),
           Expanded(
-              child: Text(value,
-                  style: TextStyle(
-                      fontFamily: 'Tajawal',
-                      fontSize: 12,
-                      color: tc.primaryText,
-                      fontWeight: FontWeight.w600))),
+            child: Text(value,
+                style: TextStyle(
+                    fontFamily: 'Tajawal',
+                    fontSize: 12,
+                    color: tc.primaryText,
+                    fontWeight: FontWeight.w600)),
+          ),
         ],
       ),
     );
   }
 }
 
-// ─── Background Painter ───────────────────────────────────────────────────────
+// ─── Background Painters ──────────────────────────────────────────────────────
 class _HomeBgPainter extends StatelessWidget {
   final _TC tc;
   const _HomeBgPainter({required this.tc});
@@ -1543,7 +1734,6 @@ class _HeaderPatternPainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = 0.8;
 
-    // Top-right star
     final cx = size.width * 0.88, cy = size.height * 0.3, r = 70.0;
     final path = Path();
     for (var i = 0; i < 8; i++) {
@@ -1557,8 +1747,6 @@ class _HeaderPatternPainter extends CustomPainter {
     }
     path.close();
     canvas.drawPath(path, paint);
-
-    // Geometric circles
     canvas.drawCircle(Offset(size.width * 0.88, size.height * 0.3), r + 12,
         paint..color = tc.gold.withOpacity(0.04));
   }

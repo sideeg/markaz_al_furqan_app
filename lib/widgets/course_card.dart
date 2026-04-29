@@ -227,9 +227,9 @@ class _CardImage extends StatelessWidget {
         Container(
           height: 112,
           width: double.infinity,
-          child: course.imagePath != null
+          child: course.image_url != null
               ? CachedNetworkImage(
-                  imageUrl: course.imagePath!,
+                  imageUrl: course.image_url!,
                   fit: BoxFit.cover,
                   height: 112,
                   width: double.infinity,
@@ -599,6 +599,7 @@ class _MiniStarPainter extends CustomPainter {
 }
 
 // ─── Compact Course Card (list view variant) ──────────────────────────────────
+// ─── Compact Course Card (list view variant) ──────────────────────────────────
 class CompactCourseCard extends StatelessWidget {
   final Course course;
   final VoidCallback? onTap;
@@ -613,8 +614,10 @@ class CompactCourseCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
-        padding: const EdgeInsets.all(14),
+        margin: const EdgeInsets.symmetric(
+            horizontal: 20,
+            vertical: 8), // تم تكبير الهامش الرأسي قليلاً لتفادي الالتصاق
+        padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: tc.card,
           borderRadius: BorderRadius.circular(16),
@@ -628,16 +631,17 @@ class CompactCourseCard extends StatelessWidget {
           ],
         ),
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center, // 👈 محاذاة في المنتصف
           children: [
             // Leading image thumbnail
             ClipRRect(
               borderRadius: BorderRadius.circular(10),
               child: SizedBox(
-                width: 52,
-                height: 52,
-                child: course.imagePath != null
+                width: 60, // 👈 زيادة الحجم قليلاً مع تثبيته
+                height: 60, // 👈 تثبيت الارتفاع
+                child: course.image_url != null
                     ? CachedNetworkImage(
-                        imageUrl: course.imagePath!,
+                        imageUrl: course.image_url!,
                         fit: BoxFit.cover,
                         placeholder: (_, __) => _PlaceholderImage(tc: tc),
                         errorWidget: (_, __, ___) => _PlaceholderImage(tc: tc),
@@ -646,56 +650,65 @@ class CompactCourseCard extends StatelessWidget {
               ),
             ),
 
-            const SizedBox(width: 12),
+            const SizedBox(width: 14),
 
             // Content
             Expanded(
+              // 👈 Expanded سيعمل بشكل ممتاز هنا لأن الحاوية (Row) بداخل كارت له هوامش واضحة
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize
+                    .min, // 👈 يجب إضافة هذا السطر لمنع الـ Overflow الرأسي
                 children: [
-                  Text(course.name,
-                      style: TextStyle(
-                          fontFamily: 'Tajawal',
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
-                          color: tc.isDark
-                              ? const Color(0xFFF0E6C8)
-                              : const Color(0xFF1C2B1F)),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis),
-                  const SizedBox(height: 5),
+                  Text(
+                    course.name,
+                    style: TextStyle(
+                        fontFamily: 'Tajawal',
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: tc.isDark
+                            ? const Color(0xFFF0E6C8)
+                            : const Color(0xFF1C2B1F)),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 6),
                   Row(
                     children: [
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 7, vertical: 2),
+                            horizontal: 8, vertical: 3),
                         decoration: BoxDecoration(
                           color: typeColor.withOpacity(0.12),
                           borderRadius: BorderRadius.circular(6),
                         ),
-                        child: Text(course.typeDisplayName,
-                            style: TextStyle(
-                                fontFamily: 'Tajawal',
-                                fontSize: 9,
-                                fontWeight: FontWeight.w700,
-                                color: typeColor)),
-                      ),
-                      const SizedBox(width: 8),
-                      Icon(Icons.people_outline_rounded,
-                          size: 11, color: tc.mutedText),
-                      const SizedBox(width: 2),
-                      Text('${course.currentStudents}/${course.maxStudents}',
+                        child: Text(
+                          course.typeDisplayName,
                           style: TextStyle(
                               fontFamily: 'Tajawal',
                               fontSize: 10,
-                              color: tc.mutedText)),
+                              fontWeight: FontWeight.w700,
+                              color: typeColor),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Icon(Icons.people_outline_rounded,
+                          size: 14, color: tc.mutedText),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${course.currentStudents}/${course.maxStudents}',
+                        style: TextStyle(
+                            fontFamily: 'Tajawal',
+                            fontSize: 11,
+                            color: tc.mutedText),
+                      ),
                     ],
                   ),
                 ],
               ),
             ),
 
-            const SizedBox(width: 8),
+            const SizedBox(width: 10),
 
             // Trailing status
             _StatusIcon(course: course, tc: tc),

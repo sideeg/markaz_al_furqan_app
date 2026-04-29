@@ -26,7 +26,7 @@ class MosqueAdapter extends TypeAdapter<Mosque> {
       email: fields[6] as String?,
       latitude: fields[7] as double?,
       longitude: fields[8] as double?,
-      imagePath: fields[9] as String?,
+      image_url: fields[9] as String?,
       isActive: fields[10] as bool,
       createdBy: fields[11] as int?,
       createdAt: fields[12] as DateTime,
@@ -57,7 +57,7 @@ class MosqueAdapter extends TypeAdapter<Mosque> {
       ..writeByte(8)
       ..write(obj.longitude)
       ..writeByte(9)
-      ..write(obj.imagePath)
+      ..write(obj.image_url)
       ..writeByte(10)
       ..write(obj.isActive)
       ..writeByte(11)

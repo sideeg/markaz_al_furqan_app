@@ -338,6 +338,7 @@ class _LoginCard extends StatelessWidget {
               hint: 'أدخل بريدك الإلكتروني',
               icon: Icons.alternate_email_rounded,
               keyboardType: TextInputType.emailAddress,
+              textInputAction: TextInputAction.next,
               validator: (v) {
                 if (v == null || v.isEmpty)
                   return 'يرجى إدخال البريد الإلكتروني';
@@ -357,6 +358,11 @@ class _LoginCard extends StatelessWidget {
               hint: 'أدخل كلمة المرور',
               icon: Icons.lock_outline_rounded,
               obscureText: obscurePass,
+              textInputAction: TextInputAction.done,
+              onFieldSubmitted: (_) {
+                // 👈 عند الضغط على Enter/Done بلوحة المفاتيح
+                if (onLogin != null) onLogin!();
+              },
               suffixIcon: IconButton(
                 icon: Icon(
                   obscurePass
@@ -454,6 +460,7 @@ class _LoginCard extends StatelessWidget {
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(14),
                   child: Stack(
+                    alignment: Alignment.center,
                     children: [
                       child!,
                       // shimmer sweep
@@ -481,6 +488,7 @@ class _LoginCard extends StatelessWidget {
               ),
               child: SizedBox(
                 height: 54,
+                width: double.infinity,
                 child: isLoading
                     ? const Center(
                         child: SizedBox(
@@ -502,6 +510,7 @@ class _LoginCard extends StatelessWidget {
                         ),
                         child: const Text(
                           'تسجيل الدخول',
+                          textAlign: TextAlign.center,
                           style: TextStyle(
                             fontFamily: 'Amiri',
                             fontSize: 17,
@@ -590,6 +599,10 @@ class _GoldTextField extends StatelessWidget {
   final Widget? suffixIcon;
   final String? Function(String?)? validator;
 
+  // 👇 خصائص جديدة للوحة المفاتيح
+  final TextInputAction? textInputAction;
+  final ValueChanged<String>? onFieldSubmitted;
+
   const _GoldTextField({
     required this.controller,
     required this.label,
@@ -599,12 +612,13 @@ class _GoldTextField extends StatelessWidget {
     this.obscureText = false,
     this.suffixIcon,
     this.validator,
+    this.textInputAction, // 👈
+    this.onFieldSubmitted, // 👈
   });
 
   @override
   Widget build(BuildContext context) {
     return Column(
-      // In RTL context, CrossAxisAlignment.start = right side ✓
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
@@ -621,8 +635,9 @@ class _GoldTextField extends StatelessWidget {
           controller: controller,
           keyboardType: keyboardType,
           obscureText: obscureText,
-          // No textDirection needed — inherited from Directionality wrapper
           validator: validator,
+          textInputAction: textInputAction, // 👈 تمرير الإجراء
+          onFieldSubmitted: onFieldSubmitted, // 👈 تمرير الحدث
           style: const TextStyle(
             fontFamily: 'Tajawal',
             fontSize: 14,

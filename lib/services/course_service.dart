@@ -3,12 +3,25 @@ import 'package:dio/dio.dart';
 import '../models/course.dart';
 import '../services/api_service.dart';
 import '../services/storage_service.dart';
+import '../services/auth_service.dart';
 
 class CourseService {
   final ApiService _apiService;
   final StorageService _storageService;
-
-  CourseService(this._apiService, this._storageService);
+  final Ref _ref;
+  CourseService(this._apiService, this._storageService, this._ref);
+  // ── Helper method to check version ──
+  void _checkAppVersion(Map<String, dynamic> responseData) {
+    final minVersion = responseData['minimum_required_version'];
+    if (minVersion != null && minVersion is String) {
+      // إرسال الرقم الجديد للـ AuthState ليحفظه ويقارنه
+      Future.microtask(() {
+        _ref
+            .read(authServiceProvider.notifier)
+            .updateMinimumVersion(minVersion);
+      });
+    }
+  }
 
   // Get all available courses
   Future<List<Course>> getCourses({
@@ -38,6 +51,7 @@ class CourseService {
           await _apiService.get('/courses', queryParameters: queryParams);
 
       if (response.data['success'] == true) {
+        _checkAppVersion(response.data);
         final coursesData = response.data['data'] as List;
         final courses = coursesData
             .map((courseJson) => Course.fromJson(courseJson))
@@ -71,6 +85,7 @@ class CourseService {
       final response = await _apiService.get('/my-courses');
 
       if (response.data['success'] == true) {
+        _checkAppVersion(response.data);
         final coursesData = response.data['data'] as List;
         final courses = coursesData
             .map((courseJson) => Course.fromJson(courseJson))
@@ -290,7 +305,8 @@ class CourseService {
 final courseServiceProvider = Provider<CourseService>((ref) {
   final apiService = ref.watch(apiServiceProvider);
   final storageService = ref.watch(storageServiceProvider);
-  return CourseService(apiService, storageService);
+  // تمرير الـ ref هنا
+  return CourseService(apiService, storageService, ref);
 });
 
 final coursesProvider = FutureProvider<List<Course>>((ref) async {

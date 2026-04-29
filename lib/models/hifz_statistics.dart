@@ -1,56 +1,48 @@
+// Path: lib/models/hifz_statistics.dart
+
 class HifzStatistics {
-  final double averagePages;
-  final int maxPages;
-  final int minPages;
   final int totalSessions;
   final int totalAyahs;
-  final double averageEvaluation;
+  final double averageEvaluation; // out of 5
+  final double quranCompletionPercentage; // 0-100
 
-  HifzStatistics({
-    required this.averagePages,
-    required this.maxPages,
-    required this.minPages,
-    required this.totalSessions,
+  const HifzStatistics({
+    this.totalSessions = 0,
     this.totalAyahs = 0,
     this.averageEvaluation = 0.0,
+    this.quranCompletionPercentage = 0.0,
   });
 
   factory HifzStatistics.fromJson(Map<String, dynamic> json) {
     return HifzStatistics(
-      averagePages: (json['avg'] ?? 0).toDouble(),
-      maxPages: json['max'] ?? 0,
-      minPages: json['min'] ?? 0,
-      totalSessions: json['count'] ?? 0,
+      totalSessions: (json['total_sessions'] as num? ?? 0).toInt(),
+      totalAyahs: (json['total_ayahs_memorized'] as num? ?? 0).toInt(),
+
+      // FIXED: Matching the new backend key 'average_evaluation_out_of_5'
+      averageEvaluation:
+          (json['average_evaluation_out_of_5'] as num? ?? 0.0).toDouble(),
+
+      // FIXED: Ensure this remains a double
+      quranCompletionPercentage:
+          (json['quran_completion_percentage'] as num? ?? 0.0).toDouble(),
     );
   }
 
   // Get evaluation percentage (out of 5)
   int get evaluationPercentage => ((averageEvaluation / 5) * 100).round();
 
-  get quranCompletionPercentage => null;
-}
-
-class CourseProgress {
-  final int courseId;
-  final int totalPages;
-
-  CourseProgress({
-    required this.courseId,
-    required this.totalPages,
-  });
-
-  factory CourseProgress.fromJson(Map<String, dynamic> json) {
-    return CourseProgress(
-      courseId: json['course_id'],
-      totalPages: json['pages'] ?? 0,
+  HifzStatistics copyWith({
+    int? totalSessions,
+    int? totalAyahs,
+    double? averageEvaluation,
+    double? quranCompletionPercentage,
+  }) {
+    return HifzStatistics(
+      totalSessions: totalSessions ?? this.totalSessions,
+      totalAyahs: totalAyahs ?? this.totalAyahs,
+      averageEvaluation: averageEvaluation ?? this.averageEvaluation,
+      quranCompletionPercentage:
+          quranCompletionPercentage ?? this.quranCompletionPercentage,
     );
   }
-
-  get courseName => null;
-
-  get totalAyahs => null;
-
-  get sessionsCount => null;
-
-  get evaluationPercent => null;
 }

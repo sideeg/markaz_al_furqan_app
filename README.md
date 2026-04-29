@@ -53,7 +53,7 @@ flutter run
 
 ## 📦 Release
 
-**Current Version:** `v1.0.0`
+**Current Version:** `v3.0.2`
 Initial public release including authentication, courses, Hifz tracking, and progress analytics.
 
 ---

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:markaz_al_furqan/main.dart';
 import 'dart:math' as math;
 import '../../services/auth_service.dart';
 
@@ -110,6 +111,8 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
 
   @override
   Widget build(BuildContext context) {
+    final currentAppVersion = ref.watch(cachedAppVersionProvider);
+
     return Scaffold(
       backgroundColor: _Colors.deepForest,
       body: Stack(
@@ -246,11 +249,11 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                     // Version
                     Opacity(
                       opacity: _fadeIn.value * 0.45,
-                      child: const Padding(
-                        padding: EdgeInsets.only(bottom: 28),
+                      child: Padding(
+                        padding: const EdgeInsets.only(bottom: 28),
                         child: Text(
-                          'الإصدار  1.0.1',
-                          style: TextStyle(
+                          'الإصدار  $currentAppVersion',
+                          style: const TextStyle(
                             fontFamily: 'Tajawal',
                             fontSize: 10,
                             color: Colors.white,

@@ -7,6 +7,45 @@ import 'dart:math' as math;
 import '../../constants/qiraat_types.dart';
 import '../../services/auth_service.dart';
 
+// ─── Constants List ───────────────────────────────────────────────────────────
+// قائمة الجنسيات بناءً على التحديث السابق
+const List<String> nationalitiesList = [
+  'سعودي',
+  'مصري',
+  'أردني',
+  'إماراتي',
+  'بحريني',
+  'كويتي',
+  'عماني',
+  'قطري',
+  'فلسطيني',
+  'سوري',
+  'لبناني',
+  'عراقي',
+  'يمني',
+  'سوداني',
+  'ليبي',
+  'تونسي',
+  'جزائري',
+  'مغربي',
+  'موريتاني',
+  'صومالي',
+  'جيبوتي',
+  'تركي',
+  'باكستاني',
+  'هندي',
+  'بنغلاديشي',
+  'أفغاني',
+  'إندونيسي',
+  'ماليزي',
+  'أمريكي',
+  'بريطاني',
+  'كندي',
+  'أسترالي',
+  'أوروبي',
+  'أخرى'
+];
+
 // ─── Adaptive Theme Colors ────────────────────────────────────────────────────
 // All color decisions live here. Toggle isDark to flip the entire palette.
 class _TC {
@@ -79,7 +118,15 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
   final _phoneCtrl = TextEditingController();
   final _nationalIdCtrl = TextEditingController();
 
+  final _nameFocus = FocusNode();
+  final _emailFocus = FocusNode();
+  final _phoneFocus = FocusNode();
+  final _nationalIdFocus = FocusNode();
+  final _passwordFocus = FocusNode();
+  final _confirmPasswordFocus = FocusNode();
+
   String? _selectedQiraat;
+  String? _selectedNationality; // 👈 المتغير الجديد للجنسية
   String? _selectedGender;
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
@@ -106,6 +153,14 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
     _confirmPasswordCtrl.dispose();
     _phoneCtrl.dispose();
     _nationalIdCtrl.dispose();
+
+    _nameFocus.dispose();
+    _emailFocus.dispose();
+    _phoneFocus.dispose();
+    _nationalIdFocus.dispose();
+    _passwordFocus.dispose();
+    _confirmPasswordFocus.dispose();
+
     _shimmerCtrl.dispose();
     super.dispose();
   }
@@ -124,6 +179,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
           ? _nationalIdCtrl.text.trim()
           : null,
       qiraat: _selectedQiraat,
+      nationality: _selectedNationality, // 👈 إرسال الجنسية للخادم
       gender: _selectedGender,
     );
     if (success && mounted) context.go('/student/home');
@@ -159,6 +215,12 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 20),
                         child: _FormCard(
+                          nameFocus: _nameFocus, // ← ADD
+                          emailFocus: _emailFocus, // ← ADD
+                          phoneFocus: _phoneFocus, // ← ADD
+                          nationalIdFocus: _nationalIdFocus, // ← ADD
+                          passwordFocus: _passwordFocus, // ← ADD
+                          confirmPasswordFocus: _confirmPasswordFocus,
                           tc: tc,
                           formKey: _formKey,
                           nameCtrl: _nameCtrl,
@@ -169,6 +231,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
                           confirmPasswordCtrl: _confirmPasswordCtrl,
                           selectedGender: _selectedGender,
                           selectedQiraat: _selectedQiraat,
+                          selectedNationality:
+                              _selectedNationality, // 👈 تمرير المتغير الجديد
                           obscurePassword: _obscurePassword,
                           obscureConfirmPassword: _obscureConfirmPassword,
                           isLoading: authState.isLoading,
@@ -178,6 +242,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
                               setState(() => _selectedGender = v),
                           onQiraatChanged: (v) =>
                               setState(() => _selectedQiraat = v),
+                          onNationalityChanged: (v) => // 👈 تحديث قيمة الجنسية
+                              setState(() => _selectedNationality = v),
                           onTogglePassword: () => setState(
                               () => _obscurePassword = !_obscurePassword),
                           onToggleConfirm: () => setState(() =>
@@ -227,7 +293,7 @@ class _RegisterHeader extends StatelessWidget {
       child: Stack(
         clipBehavior: Clip.none,
         children: [
-          // Background faint star
+          // Background faint star (تم تحديث withOpacity لـ withValues)
           Positioned(
             top: -30,
             left: -20,
@@ -247,7 +313,7 @@ class _RegisterHeader extends StatelessWidget {
             ),
           ),
 
-          // Back button (LTR physical position = left = leading in RTL)
+          // Back button
           Positioned(
             top: 0,
             right: 16,
@@ -255,7 +321,7 @@ class _RegisterHeader extends StatelessWidget {
               child: IconButton(
                 onPressed: onBack,
                 icon: Icon(Icons.arrow_forward_ios_rounded,
-                    color: tc.gold.withOpacity(0.7), size: 18),
+                    color: tc.gold.withValues(alpha: 0.7), size: 18),
               ),
             ),
           ),
@@ -273,12 +339,12 @@ class _RegisterHeader extends StatelessWidget {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     gradient: RadialGradient(
-                      colors: [tc.headerG1.withOpacity(1.0), tc.headerG2],
+                      colors: [tc.headerG1, tc.headerG2],
                     ),
                     border: Border.all(color: tc.goldBorder, width: 1.5),
                     boxShadow: [
                       BoxShadow(
-                        color: tc.gold.withOpacity(0.18),
+                        color: tc.gold.withValues(alpha: 0.18),
                         blurRadius: 20,
                         spreadRadius: 3,
                       ),
@@ -322,6 +388,12 @@ class _RegisterHeader extends StatelessWidget {
 
 // ─── Form Card ────────────────────────────────────────────────────────────────
 class _FormCard extends StatelessWidget {
+  final FocusNode nameFocus,
+      emailFocus,
+      phoneFocus,
+      nationalIdFocus,
+      passwordFocus,
+      confirmPasswordFocus;
   final _TC tc;
   final GlobalKey<FormState> formKey;
   final TextEditingController nameCtrl,
@@ -330,16 +402,24 @@ class _FormCard extends StatelessWidget {
       nationalIdCtrl,
       passwordCtrl,
       confirmPasswordCtrl;
-  final String? selectedGender, selectedQiraat;
+  final String? selectedGender, selectedQiraat, selectedNationality;
   final bool obscurePassword, obscureConfirmPassword, isLoading;
   final String? error;
   final Animation<double> shimmer;
-  final ValueChanged<String?> onGenderChanged, onQiraatChanged;
+  final ValueChanged<String?> onGenderChanged,
+      onQiraatChanged,
+      onNationalityChanged;
   final VoidCallback onTogglePassword, onToggleConfirm;
   final VoidCallback? onRegister;
   final VoidCallback onLogin;
 
   const _FormCard({
+    required this.nameFocus, // ← ADD
+    required this.emailFocus, // ← ADD
+    required this.phoneFocus, // ← ADD
+    required this.nationalIdFocus, // ← ADD
+    required this.passwordFocus, // ← ADD
+    required this.confirmPasswordFocus,
     required this.tc,
     required this.formKey,
     required this.nameCtrl,
@@ -350,6 +430,7 @@ class _FormCard extends StatelessWidget {
     required this.confirmPasswordCtrl,
     required this.selectedGender,
     required this.selectedQiraat,
+    required this.selectedNationality, // 👈
     required this.obscurePassword,
     required this.obscureConfirmPassword,
     required this.isLoading,
@@ -357,6 +438,7 @@ class _FormCard extends StatelessWidget {
     required this.shimmer,
     required this.onGenderChanged,
     required this.onQiraatChanged,
+    required this.onNationalityChanged, // 👈
     required this.onTogglePassword,
     required this.onToggleConfirm,
     required this.onRegister,
@@ -373,7 +455,7 @@ class _FormCard extends StatelessWidget {
         border: Border.all(color: tc.goldBorder),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(tc.isDark ? 0.35 : 0.08),
+            color: Colors.black.withValues(alpha: tc.isDark ? 0.35 : 0.08),
             blurRadius: 30,
             offset: const Offset(0, 10),
           ),
@@ -409,6 +491,9 @@ class _FormCard extends StatelessWidget {
             _GoldTextField(
               tc: tc,
               controller: nameCtrl,
+              focusNode: nameFocus, // ← ADD
+              textInputAction: TextInputAction.next, // ← ADD
+              onFieldSubmitted: (_) => emailFocus.requestFocus(),
               label: 'الاسم الكامل *',
               hint: 'أدخل اسمك الكامل',
               icon: Icons.person_outline_rounded,
@@ -424,6 +509,9 @@ class _FormCard extends StatelessWidget {
             _GoldTextField(
               tc: tc,
               controller: emailCtrl,
+              focusNode: emailFocus, // ← ADD
+              textInputAction: TextInputAction.next, // ← ADD
+              onFieldSubmitted: (_) => phoneFocus.requestFocus(),
               label: 'البريد الإلكتروني *',
               hint: 'أدخل بريدك الإلكتروني',
               icon: Icons.alternate_email_rounded,
@@ -447,15 +535,16 @@ class _FormCard extends StatelessWidget {
                   child: _GoldTextField(
                     tc: tc,
                     controller: phoneCtrl,
+                    focusNode: phoneFocus, // ← ADD
+                    textInputAction: TextInputAction.next, // ← ADD
+                    onFieldSubmitted: (_) => nationalIdFocus.requestFocus(),
                     label: 'رقم الهاتف',
                     hint: '05xxxxxxxx',
                     icon: Icons.phone_outlined,
                     keyboardType: TextInputType.phone,
                     validator: (v) {
-                      if (v != null && v.isNotEmpty) {
-                        if (!RegExp(r'^[+]?[0-9]{10,15}$').hasMatch(v)) {
-                          return 'رقم غير صحيح';
-                        }
+                      if (v == null) {
+                        return 'رقم غير صحيح';
                       }
                       return null;
                     },
@@ -466,13 +555,16 @@ class _FormCard extends StatelessWidget {
                   child: _GoldTextField(
                     tc: tc,
                     controller: nationalIdCtrl,
+                    focusNode: nationalIdFocus, // ← ADD
+                    textInputAction: TextInputAction.next, // ← ADD
+                    onFieldSubmitted: (_) => passwordFocus.requestFocus(),
                     label: 'رقم الهوية',
                     hint: '1xxxxxxxxx',
                     icon: Icons.badge_outlined,
                     keyboardType: TextInputType.number,
                     validator: (v) {
-                      if (v != null && v.isNotEmpty && v.length < 10) {
-                        return '10 أرقام على الأقل';
+                      if (v != null && v.isNotEmpty && v.length < 8) {
+                        return '8 أرقام على الأقل';
                       }
                       return null;
                     },
@@ -518,12 +610,26 @@ class _FormCard extends StatelessWidget {
                       tc: tc,
                       label: 'أنثى',
                       icon: Icons.female_rounded,
-                      selected: selectedGender == 'أنثى',
-                      onTap: () => onGenderChanged('أنثى'),
+                      selected: selectedGender == 'أنثي',
+                      onTap: () => onGenderChanged('أنثي'),
                     ),
                   ],
                 ),
               ],
+            ),
+
+            const SizedBox(height: 14),
+
+            // Nationality Dropdown Field
+            _GoldDropdownField(
+              tc: tc,
+              label: 'الجنسية *',
+              hint: 'اختر الجنسية',
+              icon: Icons.flag_outlined,
+              value: selectedNationality,
+              items: nationalitiesList,
+              onChanged: onNationalityChanged,
+              validator: (v) => v == null ? 'يرجى اختيار الجنسية' : null,
             ),
 
             const SizedBox(height: 14),
@@ -553,6 +659,9 @@ class _FormCard extends StatelessWidget {
             _GoldTextField(
               tc: tc,
               controller: passwordCtrl,
+              focusNode: passwordFocus, // ← ADD
+              textInputAction: TextInputAction.next, // ← ADD
+              onFieldSubmitted: (_) => confirmPasswordFocus.requestFocus(),
               label: 'كلمة المرور *',
               hint: '8 أحرف على الأقل',
               icon: Icons.lock_outline_rounded,
@@ -580,6 +689,9 @@ class _FormCard extends StatelessWidget {
             _GoldTextField(
               tc: tc,
               controller: confirmPasswordCtrl,
+              focusNode: confirmPasswordFocus, // ← ADD
+              textInputAction: TextInputAction.done, // ← ADD (last field)
+              onFieldSubmitted: (_) => onRegister?.call(),
               label: 'تأكيد كلمة المرور *',
               hint: 'أعد إدخال كلمة المرور',
               icon: Icons.lock_outline_rounded,
@@ -609,9 +721,9 @@ class _FormCard extends StatelessWidget {
                 margin: const EdgeInsets.only(bottom: 16),
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: tc.error.withOpacity(0.08),
+                  color: tc.error.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: tc.error.withOpacity(0.25)),
+                  border: Border.all(color: tc.error.withValues(alpha: 0.25)),
                 ),
                 child: Row(
                   children: [
@@ -651,7 +763,7 @@ class _FormCard extends StatelessWidget {
                       style: TextStyle(
                           fontFamily: 'Tajawal',
                           fontSize: 11,
-                          color: tc.goldDim.withOpacity(0.6))),
+                          color: tc.goldDim.withValues(alpha: 0.6))),
                 ),
                 Expanded(child: Container(height: 1, color: tc.divider)),
               ],
@@ -785,7 +897,7 @@ class _GenderChip extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(icon,
-                  color: selected ? tc.gold : tc.goldDim.withOpacity(0.5),
+                  color: selected ? tc.gold : tc.goldDim.withValues(alpha: 0.5),
                   size: 18),
               const SizedBox(width: 6),
               Text(label,
@@ -811,12 +923,18 @@ class _GoldTextField extends StatelessWidget {
   final IconData icon;
   final TextInputType keyboardType;
   final bool obscureText;
+  final FocusNode? focusNode; // ← ADD
+  final TextInputAction? textInputAction; // ← ADD
+  final void Function(String)? onFieldSubmitted;
   final Widget? suffixIcon;
   final String? Function(String?)? validator;
 
   const _GoldTextField({
     required this.tc,
     required this.controller,
+    this.focusNode, // ← ADD
+    this.textInputAction, // ← ADD
+    this.onFieldSubmitted,
     required this.label,
     required this.hint,
     required this.icon,
@@ -829,7 +947,7 @@ class _GoldTextField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start, // start = right in RTL ✓
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(label,
             style: TextStyle(
@@ -840,6 +958,9 @@ class _GoldTextField extends StatelessWidget {
         const SizedBox(height: 7),
         TextFormField(
           controller: controller,
+          focusNode: focusNode, // ← ADD
+          textInputAction: textInputAction, // ← ADD
+          onFieldSubmitted: onFieldSubmitted,
           keyboardType: keyboardType,
           obscureText: obscureText,
           validator: validator,
@@ -867,7 +988,7 @@ class _GoldTextField extends StatelessWidget {
                 borderSide: BorderSide(color: tc.gold, width: 1.2)),
             errorBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: tc.error.withOpacity(0.6))),
+                borderSide: BorderSide(color: tc.error.withValues(alpha: 0.6))),
             focusedErrorBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide(color: tc.error)),
@@ -942,7 +1063,7 @@ class _GoldDropdownField extends StatelessWidget {
                 borderSide: BorderSide(color: tc.gold, width: 1.2)),
             errorBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: tc.error.withOpacity(0.6))),
+                borderSide: BorderSide(color: tc.error.withValues(alpha: 0.6))),
             errorStyle:
                 TextStyle(fontFamily: 'Tajawal', fontSize: 11, color: tc.error),
           ),
@@ -979,85 +1100,82 @@ class _GoldButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: shimmer,
-      builder: (_, child) => Container(
-        height: 54,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(14),
-          gradient: LinearGradient(
-            colors: tc.isDark
-                ? const [
-                    Color(0xFFC4973A),
-                    Color(0xFFA87A28),
-                    Color(0xFF8A5D1E)
-                  ]
-                : const [
-                    Color(0xFFA8782A),
-                    Color(0xFF8A6020),
-                    Color(0xFF704E18)
-                  ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: tc.gold.withOpacity(0.3),
-              blurRadius: 16,
-              offset: const Offset(0, 6),
+    return InkWell(
+      onTap: onPressed,
+      borderRadius: BorderRadius.circular(14),
+      child: AnimatedBuilder(
+        animation: shimmer,
+        builder: (_, child) => Container(
+          height: 54,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            gradient: LinearGradient(
+              colors: tc.isDark
+                  ? const [
+                      Color(0xFFC4973A),
+                      Color(0xFFA87A28),
+                      Color(0xFF8A5D1E)
+                    ]
+                  : const [
+                      Color(0xFFA8782A),
+                      Color(0xFF8A6020),
+                      Color(0xFF704E18)
+                    ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
             ),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(14),
-          child: Stack(
-            children: [
-              child!,
-              if (!isLoading)
-                Positioned.fill(
-                  child: Transform.translate(
-                    offset: Offset(shimmer.value * 200, 0),
-                    child: Container(
-                      width: 60,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            Colors.white.withOpacity(0),
-                            Colors.white.withOpacity(0.15),
-                            Colors.white.withOpacity(0),
-                          ],
+            boxShadow: [
+              BoxShadow(
+                color: tc.gold.withValues(alpha: 0.3),
+                blurRadius: 16,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(14),
+            child: Stack(
+              alignment: Alignment.center, // 👈 التوسيط السحري هنا
+              children: [
+                if (!isLoading)
+                  Positioned.fill(
+                    child: Transform.translate(
+                      offset: Offset(shimmer.value * 200, 0),
+                      child: Container(
+                        width: 60,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              Colors.white.withValues(alpha: 0),
+                              Colors.white.withValues(alpha: 0.15),
+                              Colors.white.withValues(alpha: 0),
+                            ],
+                          ),
                         ),
                       ),
                     ),
                   ),
-                ),
-            ],
+                // النص أوالدائرة المتحركة في المنتصف
+                isLoading
+                    ? const SizedBox(
+                        width: 22,
+                        height: 22,
+                        child: CircularProgressIndicator(
+                            color: Colors.white, strokeWidth: 2))
+                    : Text(
+                        label,
+                        style: const TextStyle(
+                            fontFamily: 'Amiri',
+                            fontSize: 17,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFFFFF8E8),
+                            letterSpacing: 0.5),
+                        textAlign: TextAlign.center,
+                      ),
+              ],
+            ),
           ),
         ),
-      ),
-      child: SizedBox(
-        height: 54,
-        child: isLoading
-            ? const Center(
-                child: SizedBox(
-                    width: 22,
-                    height: 22,
-                    child: CircularProgressIndicator(
-                        color: Colors.white, strokeWidth: 2)))
-            : TextButton(
-                onPressed: onPressed,
-                style: TextButton.styleFrom(
-                  foregroundColor: const Color(0xFFFFF8E8),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14)),
-                ),
-                child: Text(label,
-                    style: const TextStyle(
-                        fontFamily: 'Amiri',
-                        fontSize: 17,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 0.5)),
-              ),
       ),
     );
   }
@@ -1080,7 +1198,7 @@ class _BgPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = tc.gold.withOpacity(0.05)
+      ..color = tc.gold.withValues(alpha: 0.05)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 0.8;
 
@@ -1117,7 +1235,7 @@ class _FaintStarPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = color.withOpacity(opacity)
+      ..color = color.withValues(alpha: opacity)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.0;
     final cx = size.width / 2, cy = size.height / 2;

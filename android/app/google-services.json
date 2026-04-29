@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "553266138089",
+    "project_id": "alfrugan-app",
+    "storage_bucket": "alfrugan-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:553266138089:android:838f73d0748d1b96255978",
+        "android_client_info": {
+          "package_name": "com.alfrugan.sheiks"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA_zvkkSpNbgJcgdOFwXXW9RVRBB73vslg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:553266138089:android:5c24966868011cee255978",
+        "android_client_info": {
+          "package_name": "com.sideeg.markaz_al_furqan"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA_zvkkSpNbgJcgdOFwXXW9RVRBB73vslg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

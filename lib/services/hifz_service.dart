@@ -1,22 +1,54 @@
+// Path: lib/services/hifz_service.dart
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dio/dio.dart';
 import '../models/hifz_log.dart';
 import '../models/hifz_statistics.dart';
 import 'api_service.dart';
 
+// ─── CourseProgress Model ─────────────────────────────────────────────────────
+// Maps from /hifz/my-progress → data: [{ course_id, course_name, sessions_count,
+//                                         total_ayahs, evaluation_percent }]
+class CourseProgress {
+  final int courseId;
+  final String? courseName;
+  final int? sessionsCount;
+  final int? totalAyahs;
+  final double? evaluationPercent; // 0–100
+
+  const CourseProgress({
+    required this.courseId,
+    this.courseName,
+    this.sessionsCount,
+    this.totalAyahs,
+    this.evaluationPercent,
+  });
+
+  factory CourseProgress.fromJson(Map<String, dynamic> json) {
+    return CourseProgress(
+      courseId: (json['course_id'] as num? ?? 0).toInt(),
+      courseName: json['course_name'] as String?,
+      sessionsCount: (json['sessions_count'] as num? ?? 0).toInt(),
+      totalAyahs: (json['total_ayahs'] as num? ?? 0).toInt(),
+      evaluationPercent: (json['evaluation_percent'] as num? ?? 0.0).toDouble(),
+    );
+  }
+}
+
+// ─── HifzService ──────────────────────────────────────────────────────────────
 class HifzService {
   final ApiService _apiService;
 
   HifzService(this._apiService);
 
-  // Get all hifz logs for the student
+  // ── Get all hifz logs ──────────────────────────────────────────────────────
+  // Backend: GET /hifz/my-logs → returns a plain JSON array (no success wrapper)
   Future<List<HifzLog>> getMyLogs() async {
     try {
       final response = await _apiService.get('/hifz/my-logs');
-
       if (response.data is List) {
         return (response.data as List)
-            .map((json) => HifzLog.fromJson(json))
+            .map((json) => HifzLog.fromJson(json as Map<String, dynamic>))
             .toList();
       }
       return [];
@@ -27,14 +59,14 @@ class HifzService {
     }
   }
 
-  // Get hifz logs for a specific course
+  // ── Get hifz logs for a specific course ───────────────────────────────────
+  // Backend: GET /hifz/my-logs/{course} → plain array
   Future<List<HifzLog>> getMyLogsByCourse(int courseId) async {
     try {
       final response = await _apiService.get('/hifz/my-logs/$courseId');
-
       if (response.data is List) {
         return (response.data as List)
-            .map((json) => HifzLog.fromJson(json))
+            .map((json) => HifzLog.fromJson(json as Map<String, dynamic>))
             .toList();
       }
       return [];
@@ -45,14 +77,16 @@ class HifzService {
     }
   }
 
-  // Get progress summary by course
+  // ── Get progress summary grouped by course ─────────────────────────────────
+  // Backend: GET /hifz/my-progress → { success: true, data: [...] }
   Future<List<CourseProgress>> getMyProgress() async {
     try {
       final response = await _apiService.get('/hifz/my-progress');
-
-      if (response.data is List) {
-        return (response.data as List)
-            .map((json) => CourseProgress.fromJson(json))
+      if (response.data['success'] == true) {
+        final list = response.data['data'] as List;
+        return list
+            .map(
+                (json) => CourseProgress.fromJson(json as Map<String, dynamic>))
             .toList();
       }
       return [];
@@ -63,69 +97,17 @@ class HifzService {
     }
   }
 
-  // Get overall statistics
+  // ── Get overall statistics ─────────────────────────────────────────────────
+  // Backend: GET /hifz/my-statistics → { success: true, data: { ... } }
+  // All calculations are done server-side — no local computation needed.
   Future<HifzStatistics> getMyStatistics() async {
     try {
       final response = await _apiService.get('/hifz/my-statistics');
-
-      // Also get logs to calculate additional statistics
-      final logsResponse = await _apiService.get('/hifz/my-logs');
-      final logs = (logsResponse.data as List)
-          .map((json) => HifzLog.fromJson(json))
-          .toList();
-
-      // Calculate total ayahs and average evaluation from logs
-      int totalAyahs = 0;
-      double totalEvaluation = 0;
-
-      for (var log in logs) {
-        // Calculate ayahs in this log
-        // Note: This is simplified - you might need to account for different surahs
-        int ayahsInLog = 0;
-        if (log.startSura == log.endSura) {
-          ayahsInLog = log.endAyah - log.startAyah + 1;
-        } else {
-          // For multiple surahs, this is an approximation
-          ayahsInLog = log.endAyah + (log.endSura - log.startSura) * 100;
-        }
-        totalAyahs += ayahsInLog;
-
-        // Get evaluation score
-        int evalScore = 0;
-        switch (log.evaluation) {
-          case 'excellent':
-            evalScore = 5;
-            break;
-          case 'very_good':
-            evalScore = 4;
-            break;
-          case 'good':
-            evalScore = 3;
-            break;
-          case 'needs_improvement':
-            evalScore = 2;
-            break;
-          case 'poor':
-            evalScore = 1;
-            break;
-        }
-        totalEvaluation += evalScore;
+      if (response.data['success'] == true) {
+        return HifzStatistics.fromJson(
+            response.data['data'] as Map<String, dynamic>);
       }
-
-      final avgEvaluation =
-          logs.isNotEmpty ? totalEvaluation / logs.length : 0.0;
-
-      final stats = HifzStatistics.fromJson(response.data);
-
-      // Return stats with additional calculated values
-      return HifzStatistics(
-        averagePages: stats.averagePages,
-        maxPages: stats.maxPages,
-        minPages: stats.minPages,
-        totalSessions: stats.totalSessions,
-        totalAyahs: totalAyahs,
-        averageEvaluation: avgEvaluation,
-      );
+      throw Exception(response.data['message'] ?? 'فشل في تحميل الإحصائيات');
     } on DioException catch (e) {
       throw Exception('فشل في تحميل الإحصائيات: ${e.message}');
     } catch (e) {
@@ -134,33 +116,25 @@ class HifzService {
   }
 }
 
-// Providers
+// ─── Providers ────────────────────────────────────────────────────────────────
 final hifzServiceProvider = Provider<HifzService>((ref) {
   final apiService = ref.watch(apiServiceProvider);
   return HifzService(apiService);
 });
 
-// Statistics Provider
 final hifzStatisticsProvider = FutureProvider<HifzStatistics>((ref) async {
-  final hifzService = ref.watch(hifzServiceProvider);
-  return await hifzService.getMyStatistics();
+  return ref.watch(hifzServiceProvider).getMyStatistics();
 });
 
-// Progress Provider
 final hifzProgressProvider = FutureProvider<List<CourseProgress>>((ref) async {
-  final hifzService = ref.watch(hifzServiceProvider);
-  return await hifzService.getMyProgress();
+  return ref.watch(hifzServiceProvider).getMyProgress();
 });
 
-// All Logs Provider
 final myHifzLogsProvider = FutureProvider<List<HifzLog>>((ref) async {
-  final hifzService = ref.watch(hifzServiceProvider);
-  return await hifzService.getMyLogs();
+  return ref.watch(hifzServiceProvider).getMyLogs();
 });
 
-// Logs by Course Provider
 final hifzLogsByCourseProvider =
     FutureProvider.family<List<HifzLog>, int>((ref, courseId) async {
-  final hifzService = ref.watch(hifzServiceProvider);
-  return await hifzService.getMyLogsByCourse(courseId);
+  return ref.watch(hifzServiceProvider).getMyLogsByCourse(courseId);
 });

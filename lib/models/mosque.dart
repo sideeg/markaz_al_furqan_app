@@ -1,5 +1,4 @@
 import 'package:hive/hive.dart';
-
 part 'mosque.g.dart';
 
 @HiveType(typeId: 3)
@@ -32,7 +31,7 @@ class Mosque extends HiveObject {
   final double? longitude;
 
   @HiveField(9)
-  final String? imagePath;
+  final String? image_url;
 
   @HiveField(10)
   final bool isActive;
@@ -56,7 +55,7 @@ class Mosque extends HiveObject {
     this.email,
     this.latitude,
     this.longitude,
-    this.imagePath,
+    this.image_url,
     this.isActive = true,
     this.createdBy,
     required this.createdAt,
@@ -78,7 +77,8 @@ class Mosque extends HiveObject {
       longitude: json['longitude'] != null
           ? (json['longitude'] as num).toDouble()
           : null,
-      imagePath: json['image_path'] as String?,
+      // ✅ use image_url if mosque model also appends it, fallback to image_path
+      image_url: (json['image_url'] ?? json['image_path']) as String?,
       isActive: json['is_active'] as bool? ?? true,
       createdBy: json['created_by'] as int?,
       createdAt: DateTime.parse(json['created_at'] as String),
@@ -86,60 +86,23 @@ class Mosque extends HiveObject {
     );
   }
 
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'name': name,
-      'description': description,
-      'address': address,
-      'city': city,
-      'phone': phone,
-      'email': email,
-      'latitude': latitude,
-      'longitude': longitude,
-      'image_path': imagePath,
-      'is_active': isActive,
-      'created_by': createdBy,
-      'created_at': createdAt.toIso8601String(),
-      'updated_at': updatedAt.toIso8601String(),
-    };
-  }
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'name': name,
+        'description': description,
+        'address': address,
+        'city': city,
+        'phone': phone,
+        'email': email,
+        'latitude': latitude,
+        'longitude': longitude,
+        'image_url': image_url,
+        'is_active': isActive,
+        'created_by': createdBy,
+        'created_at': createdAt.toIso8601String(),
+        'updated_at': updatedAt.toIso8601String(),
+      };
 
-  Mosque copyWith({
-    int? id,
-    String? name,
-    String? description,
-    String? address,
-    String? city,
-    String? phone,
-    String? email,
-    double? latitude,
-    double? longitude,
-    String? imagePath,
-    bool? isActive,
-    int? createdBy,
-    DateTime? createdAt,
-    DateTime? updatedAt,
-  }) {
-    return Mosque(
-      id: id ?? this.id,
-      name: name ?? this.name,
-      description: description ?? this.description,
-      address: address ?? this.address,
-      city: city ?? this.city,
-      phone: phone ?? this.phone,
-      email: email ?? this.email,
-      latitude: latitude ?? this.latitude,
-      longitude: longitude ?? this.longitude,
-      imagePath: imagePath ?? this.imagePath,
-      isActive: isActive ?? this.isActive,
-      createdBy: createdBy ?? this.createdBy,
-      createdAt: createdAt ?? this.createdAt,
-      updatedAt: updatedAt ?? this.updatedAt,
-    );
-  }
-
-  // Helper getters
   String get fullAddress {
     final parts = <String>[];
     if (address != null) parts.add(address!);
@@ -148,19 +111,14 @@ class Mosque extends HiveObject {
   }
 
   bool get hasLocation => latitude != null && longitude != null;
-
   bool get hasContactInfo => phone != null || email != null;
 
   @override
-  String toString() {
-    return 'Mosque(id: $id, name: $name)';
-  }
+  String toString() => 'Mosque(id: $id, name: $name)';
 
   @override
-  bool operator ==(Object other) {
-    if (identical(this, other)) return true;
-    return other is Mosque && other.id == id;
-  }
+  bool operator ==(Object other) =>
+      identical(this, other) || other is Mosque && other.id == id;
 
   @override
   int get hashCode => id.hashCode;

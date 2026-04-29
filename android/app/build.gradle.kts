@@ -4,7 +4,28 @@ plugins {
     id("com.android.application")
     id("kotlin-android")
     id("dev.flutter.flutter-gradle-plugin")
+    id("com.google.gms.google-services")
 }
+dependencies {
+
+  // Import the Firebase BoM
+
+  implementation(platform("com.google.firebase:firebase-bom:34.12.0"))
+
+
+  // TODO: Add the dependencies for Firebase products you want to use
+
+  // When using the BoM, don't specify versions in Firebase dependencies
+
+  implementation("com.google.firebase:firebase-analytics")
+
+
+  // Add the dependencies for any other desired Firebase products
+
+  // https://firebase.google.com/docs/android/setup#available-libraries
+
+}
+
 
 val keyProperties = Properties()
 val keyPropertiesFile = rootProject.file("key.properties")
@@ -14,7 +35,7 @@ if (keyPropertiesFile.exists()) {
 
 android {
     namespace = "com.sideeg.markaz_al_furqan"
-    compileSdk = flutter.compileSdkVersion
+    compileSdk = 35
     ndkVersion = "27.0.12077973"
 
     dependencies {
@@ -33,8 +54,8 @@ android {
 
     defaultConfig {
         applicationId = "com.sideeg.markaz_al_furqan"
-        minSdk = flutter.minSdkVersion
-        targetSdk = flutter.targetSdkVersion
+        minSdk = 23
+        targetSdk = 35
         versionCode = flutter.versionCode
         versionName = flutter.versionName
         multiDexEnabled = true
@@ -59,3 +80,4 @@ android {
 flutter {
     source = "../.."
 }
+apply(plugin = "com.google.gms.google-services")
